@@ -128,10 +128,12 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .loc-item .info{flex:1;min-width:0}
 .loc-item .title{font-weight:600;font-size:14px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
 .loc-item .coords{font-size:11px;color:var(--text-sub);margin-top:3px;font-variant-numeric:tabular-nums}
-.loc-item .acts{display:flex;gap:4px;flex:none;opacity:.5;transition:opacity .2s}
+.loc-item .acts{display:flex;gap:4px;flex:none;opacity:.55;transition:opacity .2s}
 .loc-item:hover .acts{opacity:1}
 .loc-item .acts button{padding:6px 9px;font-size:13px;background:transparent;color:var(--text-muted);box-shadow:none;border-radius:var(--radius-sm);line-height:1}
 .loc-item .acts button:hover{background:var(--bg-hover);color:var(--primary);transform:none;box-shadow:none}
+.loc-item .acts button.dir{background:var(--primary-soft);color:var(--primary)}
+.loc-item .acts button.dir:hover{background:var(--primary);color:#fff}
 .loc-item .acts button.del:hover{background:var(--danger-soft);color:var(--danger)}
 
 /* ============ INFO CARDS ============ */
@@ -151,7 +153,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .hint code{background:var(--bg-hover);color:var(--primary);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px}
 .divider{height:1px;background:var(--border);margin:16px -20px}
 
-/* ============ CODE BLOCK (Apps Script preset) ============ */
+/* ============ CODE BLOCK ============ */
 .code-section{background:var(--code-bg);border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:var(--shadow-sm)}
 .code-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06)}
 .code-header .file-info{display:flex;align-items:center;gap:8px;min-width:0}
@@ -168,25 +170,12 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .code-toggle .chev{transition:transform .3s var(--ease-out);display:inline-block;color:var(--code-accent)}
 .code-toggle.open .chev{transform:rotate(180deg)}
 
-/* ============ STEPPER (deployment guide) ============ */
+/* ============ STEPPER ============ */
 .stepper{counter-reset:step;position:relative;padding:4px 0}
 .step{position:relative;padding:0 0 20px 40px;counter-increment:step}
 .step:last-child{padding-bottom:0}
-.step::before{
-  content:counter(step);
-  position:absolute;left:0;top:0;
-  width:26px;height:26px;border-radius:50%;
-  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;font-size:11.5px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 10px -3px var(--primary-glow);
-  z-index:1;
-  letter-spacing:-.02em;
-}
-.step:not(:last-child)::after{
-  content:'';position:absolute;left:12.5px;top:28px;bottom:0;
-  width:1.5px;background:linear-gradient(180deg,var(--border-strong),transparent);
-}
+.step::before{content:counter(step);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px -3px var(--primary-glow);z-index:1;letter-spacing:-.02em}
+.step:not(:last-child)::after{content:'';position:absolute;left:12.5px;top:28px;bottom:0;width:1.5px;background:linear-gradient(180deg,var(--border-strong),transparent)}
 .step-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4;padding-top:3px;letter-spacing:-.005em}
 .step-desc{font-size:12px;color:var(--text-muted);line-height:1.6;margin-top:3px}
 .step-desc code{background:var(--bg-hover);color:var(--primary);padding:1.5px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500}
@@ -195,14 +184,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .step-cta{margin-top:8px}
 
 /* ============ CALLOUTS ============ */
-.callout{
-  border-radius:var(--radius-sm);
-  padding:11px 13px;
-  font-size:12px;
-  line-height:1.55;
-  display:flex;gap:10px;align-items:flex-start;
-  margin-top:10px;
-}
+.callout{border-radius:var(--radius-sm);padding:11px 13px;font-size:12px;line-height:1.55;display:flex;gap:10px;align-items:flex-start;margin-top:10px}
 .callout .ico{font-size:14px;line-height:1.3;flex:none}
 .callout .body{flex:1;min-width:0}
 .callout .body b{font-weight:700;display:block;margin-bottom:2px;font-size:11.5px;letter-spacing:-.01em}
@@ -213,14 +195,8 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .callout.success{background:var(--success-soft);border-left:3px solid var(--success);color:var(--text)}
 .callout.success .body b{color:var(--success)}
 
-/* ============ SECTION TITLE ============ */
-.step-badge{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:20px;height:20px;border-radius:6px;
-  background:var(--primary);color:#fff;
-  font-size:11px;font-weight:800;
-  margin-right:8px;letter-spacing:-.02em;
-}
+/* ============ SECTION BADGE ============ */
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:var(--primary);color:#fff;font-size:11px;font-weight:800;margin-right:8px;letter-spacing:-.02em}
 .panel h3.with-badge{display:flex;align-items:center}
 
 /* ============ TOAST ============ */
@@ -281,7 +257,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
   <!-- ============ TAB: SETTINGS ============ -->
   <section id="tab-settings" class="tab-panel">
 
-    <!-- ---------- Gmail ---------- -->
     <div class="panel">
       <h3>Gmail Account</h3>
       <input type="email" id="gmailInput" placeholder="you@gmail.com" autocomplete="email" />
@@ -289,9 +264,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <div class="hint">Stored locally and embedded in the Drive JSON for reference.</div>
     </div>
 
-    <!-- ============================================================
-         STEP 1 — Copy the Apps Script code
-         ============================================================ -->
     <div class="panel">
       <h3 class="with-badge"><span class="step-badge">1</span> Copy the Apps Script Code</h3>
 
@@ -323,15 +295,11 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       </div>
     </div>
 
-    <!-- ============================================================
-         STEP 2 — Deploy & get the Web App URL (visual stepper)
-         ============================================================ -->
     <div class="panel">
       <h3 class="with-badge"><span class="step-badge">2</span> Deploy &amp; Get the Web App URL</h3>
 
       <div class="stepper">
 
-        <!-- Step 1 -->
         <div class="step">
           <div class="step-title">Open Google Apps Script</div>
           <div class="step-desc">
@@ -345,7 +313,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 2 -->
         <div class="step">
           <div class="step-title">Create a new project</div>
           <div class="step-desc">
@@ -354,7 +321,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 3 -->
         <div class="step">
           <div class="step-title">Paste the code</div>
           <div class="step-desc">
@@ -363,7 +329,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 4 -->
         <div class="step">
           <div class="step-title">Save the project</div>
           <div class="step-desc">
@@ -372,7 +337,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 5 -->
         <div class="step">
           <div class="step-title">Start a new deployment</div>
           <div class="step-desc">
@@ -380,7 +344,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 6 -->
         <div class="step">
           <div class="step-title">Choose "Web app" as the type</div>
           <div class="step-desc">
@@ -388,7 +351,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 7 -->
         <div class="step">
           <div class="step-title">Set permissions</div>
           <div class="step-desc">
@@ -407,7 +369,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 8 -->
         <div class="step">
           <div class="step-title">Authorize the script</div>
           <div class="step-desc">
@@ -428,7 +389,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           </div>
         </div>
 
-        <!-- Step 9 -->
         <div class="step">
           <div class="step-title">Copy the Web App URL</div>
           <div class="step-desc">
@@ -454,9 +414,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       </div>
     </div>
 
-    <!-- ============================================================
-         STEP 3 — Bridge URL
-         ============================================================ -->
     <div class="panel">
       <h3 class="with-badge"><span class="step-badge">3</span> Paste the Bridge URL</h3>
       <input type="url" id="scriptUrlInput"
@@ -476,7 +433,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <button id="btnDisconnect" class="ghost block">🔓 Clear Script URL</button>
     </div>
 
-    <!-- ---------- Status ---------- -->
     <div class="panel">
       <h3>Status</h3>
       <div class="info-card">
@@ -493,7 +449,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       </div>
     </div>
 
-    <!-- ---------- Local data ---------- -->
     <div class="panel">
       <h3>Local Data</h3>
       <button id="btnExportLocal" class="ghost block">⬇️ Export Local JSON</button>
@@ -508,7 +463,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 <div id="toast"></div>
 
 <!-- =====================================================================
-     Apps Script preset — kept out of the DOM tree as raw text
+     Apps Script preset
      ===================================================================== -->
 <script type="text/plain" id="appsScriptSource">
 /* ============================================================
@@ -648,7 +603,23 @@ function fmtTime(iso) {
 }
 
 /* =====================================================================
-   PRESET APPS SCRIPT — inject into the code viewer
+   GOOGLE MAPS URL HELPERS
+   ===================================================================== */
+/** Directions from the device's current location → the target. */
+function directionsUrl(loc) {
+  return 'https://www.google.com/maps/dir/?api=1'
+       + '&destination=' + encodeURIComponent(loc.lat + ',' + loc.lng)
+       + '&travelmode=driving';
+}
+
+/** Open a location on the map (single pin). */
+function viewUrl(loc) {
+  return 'https://www.google.com/maps/search/?api=1'
+       + '&query=' + encodeURIComponent(loc.lat + ',' + loc.lng);
+}
+
+/* =====================================================================
+   PRESET APPS SCRIPT
    ===================================================================== */
 function loadAppsScriptPreset() {
   const src = document.getElementById('appsScriptSource').textContent
@@ -656,7 +627,6 @@ function loadAppsScriptPreset() {
   document.getElementById('appsScriptCode').textContent = src;
 }
 
-/* Copy button */
 document.getElementById('btnCopyAppsScript').addEventListener('click', async (e) => {
   const btn  = e.currentTarget;
   const code = document.getElementById('appsScriptCode').textContent;
@@ -687,7 +657,6 @@ document.getElementById('btnCopyAppsScript').addEventListener('click', async (e)
   }
 });
 
-/* Expand / collapse */
 document.getElementById('codeToggle').addEventListener('click', (e) => {
   const body   = document.getElementById('codeBody');
   const toggle = e.currentTarget;
@@ -733,11 +702,18 @@ function initMap() {
 
 function popupHtml(loc) {
   return `<b style="font-size:14px">${esc(loc.title)}</b><br>
-    <span style="font-size:11px;color:#64748b">${fmtCoord(loc.lat)}, ${fmtCoord(loc.lng)}</span><br>
-    <a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}" target="_blank" rel="noopener"
-       style="color:#4f46e5;font-size:12px;text-decoration:none;font-weight:600;display:inline-block;margin-top:6px">
-      Open in Google Maps ↗
-    </a>`;
+    <span style="font-size:11px;color:#64748b">${fmtCoord(loc.lat)}, ${fmtCoord(loc.lng)}</span>
+    <div style="display:flex;gap:12px;margin-top:10px;align-items:center">
+      <a href="${directionsUrl(loc)}" target="_blank" rel="noopener"
+         style="color:#fff;background:#4f46e5;font-size:12px;text-decoration:none;font-weight:600;
+                padding:6px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:4px">
+        🧭 Directions
+      </a>
+      <a href="${viewUrl(loc)}" target="_blank" rel="noopener"
+         style="color:#4f46e5;font-size:12px;text-decoration:none;font-weight:600">
+        📍 View
+      </a>
+    </div>`;
 }
 
 function refreshMarkers() {
@@ -787,6 +763,7 @@ function render() {
           <div class="coords">${fmtCoord(l.lat)}, ${fmtCoord(l.lng)}</div>
         </div>
         <div class="acts">
+          <button data-act="dir"  data-id="${l.id}" class="dir" title="Get Directions">🧭</button>
           <button data-act="edit" data-id="${l.id}" title="Rename">✏️</button>
           <button data-act="del"  data-id="${l.id}" class="del" title="Delete">🗑️</button>
         </div>
@@ -799,6 +776,16 @@ $('#locationList').addEventListener('click', e => {
   const id  = item.dataset.id;
   const btn = e.target.closest('button[data-act]');
   if (!btn) { flyTo(id); return; }
+
+  if (btn.dataset.act === 'dir') {
+    const loc = state.locations.find(l => l.id === id);
+    if (!loc) return;
+    // Opens Google Maps (or the mobile Maps app) with directions
+    // from the device's current location to this saved place.
+    window.open(directionsUrl(loc), '_blank', 'noopener');
+    toast('Opening directions in Google Maps…');
+    return;
+  }
 
   if (btn.dataset.act === 'edit') {
     const loc = state.locations.find(l => l.id === id);
