@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Location Tracker</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ==================== DESIGN TOKENS ==================== */
+:root {
+  --bg-app:#eef1f7; --bg-panel:#fff; --bg-panel-2:#f7f9fc; --bg-glass:rgba(255,255,255,.72); --bg-hover:#f0f4fa;
+  --border:#e4e9f2; --border-strong:#d3dbe8;
+  --text:#0f172a; --text-muted:#64748b; --text-sub:#94a3b8;
+  --primary:#4f46e5; --primary-dark:#4338ca; --primary-soft:#eef2ff; --primary-glow:rgba(79,70,229,.28);
+  --success:#10b981; --success-soft:#d1fae5; --warning:#f59e0b; --warning-soft:#fef3c7;
+  --danger:#ef4444; --danger-soft:#fee2e2;
+  --code-bg:#0f172a; --code-text:#e2e8f0; --code-accent:#7dd3fc;
+  --radius-sm:8px; --radius:14px; --radius-lg:20px; --radius-xl:28px;
+  --shadow-xs:0 1px 2px rgba(15,23,42,.04);
+  --shadow-sm:0 2px 8px rgba(15,23,42,.06);
+  --shadow:0 8px 24px -6px rgba(15,23,42,.10),0 2px 6px rgba(15,23,42,.04);
+  --shadow-lg:0 20px 40px -12px rgba(15,23,42,.18),0 4px 12px rgba(15,23,42,.06);
+  --shadow-glow:0 8px 24px -6px var(--primary-glow);
+  --ease:cubic-bezier(.4,0,.2,1); --ease-out:cubic-bezier(.16,1,.3,1);
+}
+@media (prefers-color-scheme: dark) {
+  :root{
+    --bg-app:#0b1120; --bg-panel:#111827; --bg-panel-2:#0f172a; --bg-glass:rgba(17,24,39,.72); --bg-hover:#1e293b;
+    --border:#1e293b; --border-strong:#334155;
+    --text:#f1f5f9; --text-muted:#94a3b8; --text-sub:#64748b;
+    --primary:#6366f1; --primary-dark:#818cf8; --primary-soft:rgba(99,102,241,.14); --primary-glow:rgba(99,102,241,.35);
+    --success-soft:rgba(16,185,129,.16); --warning-soft:rgba(245,158,11,.16); --danger-soft:rgba(239,68,68,.16);
+    --shadow-xs:0 1px 2px rgba(0,0,0,.3); --shadow-sm:0 2px 8px rgba(0,0,0,.35);
+    --shadow:0 8px 24px -6px rgba(0,0,0,.5); --shadow-lg:0 20px 40px -12px rgba(0,0,0,.6);
+    --code-bg:#020617; --code-text:#e2e8f0;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden;background:var(--bg-app);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* ============ MAP ============ */
+#map{flex:1;height:100%;background:var(--bg-panel-2)}
+.leaflet-container{font-family:inherit}
+.leaflet-popup-content-wrapper{border-radius:var(--radius)!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border)!important;background:var(--bg-panel)!important;color:var(--text)!important}
+.leaflet-popup-content{margin:14px 16px!important;font-size:13px!important;line-height:1.5!important}
+.leaflet-popup-tip{background:var(--bg-panel)!important;border:1px solid var(--border)!important}
+.leaflet-popup-close-button{color:var(--text-muted)!important;padding:8px 8px 0 0!important}
+.leaflet-control-zoom a{background:var(--bg-panel)!important;color:var(--text)!important;border-color:var(--border)!important}
+.leaflet-control-zoom a:hover{background:var(--bg-hover)!important}
+.leaflet-control-attribution{background:var(--bg-glass)!important;backdrop-filter:blur(8px);color:var(--text-sub)!important;border-radius:var(--radius-sm) 0 0 0!important;font-size:10px!important}
+
+/* ============ SIDEBAR ============ */
+#sidebar{width:380px;min-width:380px;height:100%;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:-8px 0 30px -20px rgba(15,23,42,.25);z-index:1000;position:relative}
+
+/* ============ STATUS ============ */
+#statusBar{padding:12px 20px;font-size:12px;font-weight:500;color:var(--text-muted);background:var(--bg-panel-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex:none}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text-sub);flex:none;transition:background .3s}
+.dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-soft)}
+.dot.dirty{background:var(--warning);box-shadow:0 0 0 3px var(--warning-soft)}
+.dot.busy{background:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--primary-soft)}50%{box-shadow:0 0 0 6px transparent}}
+
+/* ============ TABS ============ */
+#tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--bg-panel);border-bottom:1px solid var(--border);flex:none}
+.tab-btn{flex:1;padding:11px 12px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-radius:var(--radius-sm) var(--radius-sm) 0 0;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;transition:color .2s,background .2s}
+.tab-btn::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;background:var(--primary);border-radius:3px 3px 0 0;transform:scaleX(0);transition:transform .3s var(--ease-out)}
+.tab-btn:hover{color:var(--text);background:var(--bg-hover)}
+.tab-btn.active{color:var(--primary)}
+.tab-btn.active::after{transform:scaleX(1)}
+.tab-btn .badge{background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;line-height:1.4}
+.tab-btn:not(.active) .badge{background:var(--border-strong);color:var(--text-muted)}
+
+/* ============ PANELS ============ */
+.tab-panel{display:none;flex:1;overflow-y:auto;flex-direction:column}
+.tab-panel.active{display:flex;animation:fadeUp .35s var(--ease-out)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.panel{padding:18px 20px;border-bottom:1px solid var(--border)}
+.panel:last-child{border-bottom:none}
+.panel h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;font-weight:700}
+.panel h4{font-size:12px;font-weight:700;color:var(--text);margin:16px 0 10px;letter-spacing:-.01em}
+
+/* ============ BUTTONS ============ */
+button{font-family:inherit;padding:11px 16px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:-.01em;transition:transform .15s,box-shadow .2s,opacity .15s,background .2s;box-shadow:var(--shadow-glow);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 26px -8px var(--primary-glow),0 4px 10px -2px var(--primary-glow)}
+button:active:not(:disabled){transform:translateY(0)}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+button.secondary{background:var(--bg-panel-2);color:var(--text);box-shadow:var(--shadow-xs);border:1px solid var(--border)}
+button.secondary:hover:not(:disabled){background:var(--bg-hover);border-color:var(--border-strong);box-shadow:var(--shadow-sm)}
+button.ghost{background:transparent;color:var(--primary);border:1px solid var(--border);box-shadow:none}
+button.ghost:hover:not(:disabled){background:var(--primary-soft);border-color:var(--primary);box-shadow:none}
+button.danger{background:transparent;color:var(--danger);border:1px solid var(--border);box-shadow:none}
+button.danger:hover:not(:disabled){background:var(--danger-soft);border-color:var(--danger);box-shadow:none}
+button.block{width:100%;margin-top:8px}
+button.copy-btn{padding:6px 12px;font-size:11.5px;font-weight:600;background:rgba(255,255,255,.1);color:#e2e8f0;border:1px solid rgba(255,255,255,.15);box-shadow:none;backdrop-filter:blur(4px)}
+button.copy-btn:hover:not(:disabled){background:rgba(255,255,255,.2);box-shadow:none;transform:none}
+button.copy-btn.copied{background:var(--success);border-color:var(--success);color:#fff}
+
+/* ============ INPUTS ============ */
+input[type="email"],input[type="text"],input[type="url"]{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px;background:var(--bg-panel-2);color:var(--text);transition:border-color .2s,box-shadow .2s,background .2s}
+input::placeholder{color:var(--text-sub)}
+input:hover{border-color:var(--border-strong)}
+input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);box-shadow:0 0 0 4px var(--primary-soft)}
+
+/* ============ CHECKBOX ============ */
+.checkrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);margin:14px 0 4px;cursor:pointer;user-select:none}
+.checkrow input{appearance:none;width:38px;height:22px;background:var(--border-strong);border-radius:22px;position:relative;cursor:pointer;transition:background .25s var(--ease);flex:none;margin:0}
+.checkrow input::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .25s var(--ease-out)}
+.checkrow input:checked{background:var(--primary)}
+.checkrow input:checked::after{transform:translateX(16px)}
+
+/* ============ LOCATION LIST ============ */
+#locationList{flex:1;overflow-y:auto;padding:14px 16px}
+.empty{color:var(--text-sub);font-size:13px;text-align:center;padding:48px 20px;line-height:1.6}
+.empty svg{display:block;margin:0 auto 16px;opacity:.35}
+.empty b{color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;font-size:14px}
+.loc-item{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .2s,box-shadow .25s,transform .2s;position:relative;overflow:hidden}
+.loc-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--primary),var(--primary-dark));transform:scaleY(0);transition:transform .3s var(--ease-out);transform-origin:top}
+.loc-item:hover{border-color:var(--primary);box-shadow:0 8px 24px -10px var(--primary-glow);transform:translateY(-1px)}
+.loc-item:hover::before{transform:scaleY(1)}
+.loc-item .info{flex:1;min-width:0}
+.loc-item .title{font-weight:600;font-size:14px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.loc-item .coords{font-size:11px;color:var(--text-sub);margin-top:3px;font-variant-numeric:tabular-nums}
+.loc-item .acts{display:flex;gap:4px;flex:none;opacity:.5;transition:opacity .2s}
+.loc-item:hover .acts{opacity:1}
+.loc-item .acts button{padding:6px 9px;font-size:13px;background:transparent;color:var(--text-muted);box-shadow:none;border-radius:var(--radius-sm);line-height:1}
+.loc-item .acts button:hover{background:var(--bg-hover);color:var(--primary);transform:none;box-shadow:none}
+.loc-item .acts button.del:hover{background:var(--danger-soft);color:var(--danger)}
+
+/* ============ INFO CARDS ============ */
+.info-card{background:var(--bg-panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:13px;color:var(--text);line-height:1.5;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.info-card + .info-card{margin-top:8px}
+.info-card .k{color:var(--text-sub);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;flex:none}
+.info-card .v{font-weight:600;color:var(--text);text-align:right;word-break:break-word;font-size:12.5px}
+
+/* ============ PILLS ============ */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.02em;text-transform:uppercase}
+.pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--success-soft);color:var(--success)}
+.pill.off{background:var(--bg-hover);color:var(--text-muted)}
+.pill.warn{background:var(--warning-soft);color:var(--warning)}
+
+.hint{font-size:11.5px;color:var(--text-sub);margin-top:10px;line-height:1.55}
+.hint code{background:var(--bg-hover);color:var(--primary);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px}
+.divider{height:1px;background:var(--border);margin:16px -20px}
+
+/* ============ CODE BLOCK (Apps Script preset) ============ */
+.code-section{background:var(--code-bg);border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:var(--shadow-sm)}
+.code-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06)}
+.code-header .file-info{display:flex;align-items:center;gap:8px;min-width:0}
+.code-header .file-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;flex:none;box-shadow:0 0 0 3px rgba(245,158,11,.18)}
+.code-header .file-name{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--code-accent);letter-spacing:-.01em}
+.code-header .file-lang{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.code-body{position:relative;max-height:0;overflow:hidden;transition:max-height .45s var(--ease-out)}
+.code-body.open{max-height:640px;overflow-y:auto}
+.code-body pre{margin:0;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;color:var(--code-text);white-space:pre;tab-size:2;overflow-x:auto}
+.code-body pre::-webkit-scrollbar{height:8px;width:8px}
+.code-body pre::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px}
+.code-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;cursor:pointer;user-select:none;background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.06);color:#cbd5e1;font-size:12px;font-weight:600;transition:background .15s}
+.code-toggle:hover{background:rgba(255,255,255,.06)}
+.code-toggle .chev{transition:transform .3s var(--ease-out);display:inline-block;color:var(--code-accent)}
+.code-toggle.open .chev{transform:rotate(180deg)}
+
+/* ============ STEPPER (deployment guide) ============ */
+.stepper{counter-reset:step;position:relative;padding:4px 0}
+.step{position:relative;padding:0 0 20px 40px;counter-increment:step}
+.step:last-child{padding-bottom:0}
+.step::before{
+  content:counter(step);
+  position:absolute;left:0;top:0;
+  width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;font-size:11.5px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 10px -3px var(--primary-glow);
+  z-index:1;
+  letter-spacing:-.02em;
+}
+.step:not(:last-child)::after{
+  content:'';position:absolute;left:12.5px;top:28px;bottom:0;
+  width:1.5px;background:linear-gradient(180deg,var(--border-strong),transparent);
+}
+.step-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4;padding-top:3px;letter-spacing:-.005em}
+.step-desc{font-size:12px;color:var(--text-muted);line-height:1.6;margin-top:3px}
+.step-desc code{background:var(--bg-hover);color:var(--primary);padding:1.5px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500}
+.step-desc a{color:var(--primary);text-decoration:none;font-weight:600}
+.step-desc a:hover{text-decoration:underline}
+.step-cta{margin-top:8px}
+
+/* ============ CALLOUTS ============ */
+.callout{
+  border-radius:var(--radius-sm);
+  padding:11px 13px;
+  font-size:12px;
+  line-height:1.55;
+  display:flex;gap:10px;align-items:flex-start;
+  margin-top:10px;
+}
+.callout .ico{font-size:14px;line-height:1.3;flex:none}
+.callout .body{flex:1;min-width:0}
+.callout .body b{font-weight:700;display:block;margin-bottom:2px;font-size:11.5px;letter-spacing:-.01em}
+.callout.warn{background:var(--warning-soft);border-left:3px solid var(--warning);color:var(--text)}
+.callout.warn .body b{color:var(--warning)}
+.callout.info{background:var(--primary-soft);border-left:3px solid var(--primary);color:var(--text)}
+.callout.info .body b{color:var(--primary)}
+.callout.success{background:var(--success-soft);border-left:3px solid var(--success);color:var(--text)}
+.callout.success .body b{color:var(--success)}
+
+/* ============ SECTION TITLE ============ */
+.step-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;border-radius:6px;
+  background:var(--primary);color:#fff;
+  font-size:11px;font-weight:800;
+  margin-right:8px;letter-spacing:-.02em;
+}
+.panel h3.with-badge{display:flex;align-items:center}
+
+/* ============ TOAST ============ */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(24px) scale(.96);background:var(--text);color:var(--bg-panel);padding:13px 22px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .28s var(--ease-out),transform .35s var(--ease-out);z-index:9999;max-width:80vw;box-shadow:var(--shadow-lg)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+@media (prefers-color-scheme: dark){#toast{background:var(--bg-panel);color:var(--text);border:1px solid var(--border-strong)}}
+
+/* ============ SCROLLBAR ============ */
+#locationList::-webkit-scrollbar,.tab-panel::-webkit-scrollbar{width:8px}
+#locationList::-webkit-scrollbar-thumb,.tab-panel::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;border:2px solid var(--bg-panel)}
+
+/* ============ MOBILE ============ */
+@media (max-width:720px){
+  body{flex-direction:column}
+  #sidebar{width:100%;min-width:0;height:60%;border-left:none;border-top:1px solid var(--border);border-radius:var(--radius-xl) var(--radius-xl) 0 0;margin-top:-20px;box-shadow:0 -12px 30px -12px rgba(15,23,42,.2)}
+  #map{height:42%}
+  #sidebar::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:40px;height:4px;background:var(--border-strong);border-radius:4px}
+  #statusBar{padding-top:20px;border-radius:var(--radius-xl) var(--radius-xl) 0 0}
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<aside id="sidebar">
+
+  <div id="statusBar">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Loading…</span>
+  </div>
+
+  <div id="tabs">
+    <button class="tab-btn active" data-tab="locations">
+      <span>📍</span><span>Locations</span>
+      <span class="badge" id="tabBadge">0</span>
+    </button>
+    <button class="tab-btn" data-tab="settings">
+      <span>⚙️</span><span>Settings</span>
+    </button>
+  </div>
+
+  <!-- ============ TAB: LOCATIONS ============ -->
+  <section id="tab-locations" class="tab-panel active">
+    <div class="panel">
+      <h3>Current Location</h3>
+      <button id="btnTrack" class="block">📡 Get My Location</button>
+      <button id="btnSaveCurrent" class="secondary block" disabled>💾 Save This Location</button>
+      <div class="hint">Drag the marker on the map to fine-tune before saving.</div>
+    </div>
+    <div class="panel" style="padding-bottom:6px;border-bottom:none;">
+      <h3>Saved Locations</h3>
+    </div>
+    <div id="locationList"></div>
+  </section>
+
+  <!-- ============ TAB: SETTINGS ============ -->
+  <section id="tab-settings" class="tab-panel">
+
+    <!-- ---------- Gmail ---------- -->
+    <div class="panel">
+      <h3>Gmail Account</h3>
+      <input type="email" id="gmailInput" placeholder="you@gmail.com" autocomplete="email" />
+      <button id="btnSaveGmail" class="secondary block">Save Gmail ID</button>
+      <div class="hint">Stored locally and embedded in the Drive JSON for reference.</div>
+    </div>
+
+    <!-- ============================================================
+         STEP 1 — Copy the Apps Script code
+         ============================================================ -->
+    <div class="panel">
+      <h3 class="with-badge"><span class="step-badge">1</span> Copy the Apps Script Code</h3>
+
+      <div class="code-section">
+        <div class="code-header">
+          <div class="file-info">
+            <span class="file-dot"></span>
+            <span class="file-name">Code.gs</span>
+            <span class="file-lang">Apps Script</span>
+          </div>
+          <button class="copy-btn" id="btnCopyAppsScript" title="Copy code to clipboard">
+            📋 Copy code
+          </button>
+        </div>
+
+        <div class="code-body" id="codeBody">
+          <pre><code id="appsScriptCode"></code></pre>
+        </div>
+
+        <div class="code-toggle" id="codeToggle">
+          <span>Show / hide the code</span>
+          <span class="chev">▼</span>
+        </div>
+      </div>
+
+      <div class="hint">
+        This script acts as a bridge between the app and your Google Drive.
+        It runs entirely inside your Google account.
+      </div>
+    </div>
+
+    <!-- ============================================================
+         STEP 2 — Deploy & get the Web App URL (visual stepper)
+         ============================================================ -->
+    <div class="panel">
+      <h3 class="with-badge"><span class="step-badge">2</span> Deploy &amp; Get the Web App URL</h3>
+
+      <div class="stepper">
+
+        <!-- Step 1 -->
+        <div class="step">
+          <div class="step-title">Open Google Apps Script</div>
+          <div class="step-desc">
+            Go to <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a>
+            in a new tab and sign in with the Google account you want your data stored in.
+          </div>
+          <div class="step-cta">
+            <button class="ghost" onclick="window.open('https://script.google.com/home/projects/create','_blank','noopener')">
+              🚀 Open Apps Script ↗
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+          <div class="step-title">Create a new project</div>
+          <div class="step-desc">
+            Click <code>+ New project</code> on the top-left. Apps Script will open a blank
+            <code>Code.gs</code> editor for you.
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+          <div class="step-title">Paste the code</div>
+          <div class="step-desc">
+            Select everything in the editor (Ctrl/⌘ + A), delete it, then paste the code you copied in
+            <b>Step 1</b> (Ctrl/⌘ + V).
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step">
+          <div class="step-title">Save the project</div>
+          <div class="step-desc">
+            Press <code>Ctrl + S</code> (Windows) or <code>⌘ + S</code> (Mac), or click the
+            <b>💾 Save</b> icon in the toolbar.
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step">
+          <div class="step-title">Start a new deployment</div>
+          <div class="step-desc">
+            Click the blue <b>Deploy</b> button (top-right) → select <b>New deployment</b>.
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="step">
+          <div class="step-title">Choose "Web app" as the type</div>
+          <div class="step-desc">
+            Click the <b>⚙ gear icon</b> next to "Select type" → choose <b>Web app</b>.
+          </div>
+        </div>
+
+        <!-- Step 7 -->
+        <div class="step">
+          <div class="step-title">Set permissions</div>
+          <div class="step-desc">
+            Fill in the fields exactly as shown:
+            <br>• <b>Execute as:</b> <code>Me (your@gmail.com)</code>
+            <br>• <b>Who has access:</b> <code>Anyone</code>
+          </div>
+
+          <div class="callout warn">
+            <span class="ico">⚠️</span>
+            <div class="body">
+              <b>Important</b>
+              "Who has access" must be <b>Anyone</b> — otherwise the browser cannot reach
+              your Web App and sync will fail with a CORS error.
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 8 -->
+        <div class="step">
+          <div class="step-title">Authorize the script</div>
+          <div class="step-desc">
+            Click <b>Deploy</b>. Google will ask for permission the first time:
+            <br>1. <b>Authorize access</b>
+            <br>2. Choose your Google account
+            <br>3. Click <b>Advanced</b> → <b>Go to [project] (unsafe)</b>
+            <br>4. Click <b>Allow</b>
+          </div>
+
+          <div class="callout info">
+            <span class="ico">ℹ️</span>
+            <div class="body">
+              <b>Why "unsafe"?</b>
+              That warning appears for any personal Apps Script. Since you wrote this script
+              yourself, it is safe to proceed.
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 9 -->
+        <div class="step">
+          <div class="step-title">Copy the Web App URL</div>
+          <div class="step-desc">
+            After deployment, a dialog shows the <b>Web app URL</b>. It looks like:
+            <br><code>https://script.google.com/macros/s/AKfy…/exec</code>
+            <br>Click the <b>Copy</b> button next to it.
+          </div>
+          <div class="step-desc" style="margin-top:6px;">
+            You can also find this URL later at
+            <b>Deploy → Manage deployments</b>.
+          </div>
+        </div>
+
+      </div>
+
+      <div class="callout success" style="margin-top:16px;">
+        <span class="ico">✅</span>
+        <div class="body">
+          <b>Almost done</b>
+          Paste the URL you copied into the <b>Bridge URL</b> field just below and click
+          <b>Save Script URL</b>.
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         STEP 3 — Bridge URL
+         ============================================================ -->
+    <div class="panel">
+      <h3 class="with-badge"><span class="step-badge">3</span> Paste the Bridge URL</h3>
+      <input type="url" id="scriptUrlInput"
+             placeholder="https://script.google.com/macros/s/…/exec" />
+      <button id="btnSaveScript" class="secondary block">Save Script URL</button>
+      <button id="btnTestScript" class="ghost block">🔌 Test Connection</button>
+
+      <label class="checkrow">
+        <input type="checkbox" id="autoSync" checked />
+        <span>Auto-sync every change</span>
+      </label>
+
+      <div class="divider"></div>
+
+      <button id="btnSync" class="block">☁️ Sync to Drive</button>
+      <button id="btnImport" class="secondary block">📥 Import from Drive</button>
+      <button id="btnDisconnect" class="ghost block">🔓 Clear Script URL</button>
+    </div>
+
+    <!-- ---------- Status ---------- -->
+    <div class="panel">
+      <h3>Status</h3>
+      <div class="info-card">
+        <span class="k">Bridge</span>
+        <span class="v" id="connState"><span class="pill off">Not set</span></span>
+      </div>
+      <div class="info-card">
+        <span class="k">Target</span>
+        <span class="v">Saved address / saved_address.json</span>
+      </div>
+      <div class="info-card">
+        <span class="k">Last Sync</span>
+        <span class="v" id="lastSyncTime">Never</span>
+      </div>
+    </div>
+
+    <!-- ---------- Local data ---------- -->
+    <div class="panel">
+      <h3>Local Data</h3>
+      <button id="btnExportLocal" class="ghost block">⬇️ Export Local JSON</button>
+      <button id="btnClearLocal" class="danger block">🗑️ Clear All Local Data</button>
+      <div class="hint">Clearing local data does not affect the Google Drive copy.</div>
+    </div>
+
+  </section>
+
+</aside>
+
+<div id="toast"></div>
+
+<!-- =====================================================================
+     Apps Script preset — kept out of the DOM tree as raw text
+     ===================================================================== -->
+<script type="text/plain" id="appsScriptSource">
+/* ============================================================
+   Location Tracker — Drive Bridge
+   Deploy as Web App:
+     Execute as      : Me
+     Who has access  : Anyone
+   ============================================================ */
+const FOLDER_NAME = 'Saved address';
+const FILE_NAME   = 'saved_address.json';
+
+function doPost(e) { return handle(e); }
+function doGet(e)  { return handle(e); }
+
+function handle(e) {
+  try {
+    const q    = (e && e.parameter) ? e.parameter : {};
+    const body = (e && e.postData && e.postData.contents)
+                   ? JSON.parse(e.postData.contents) : {};
+    const action = q.action || body.action;
+    let result;
+
+    switch (action) {
+      case 'ping': result = { ok: true, message: 'Connected to Drive bridge' }; break;
+      case 'save': result = saveData(body.payload);                              break;
+      case 'load': result = loadData();                                          break;
+      default:     result = { ok: false, error: 'Unknown action: ' + action };
+    }
+    return out(result);
+  } catch (err) {
+    return out({ ok: false, error: String(err) });
+  }
+}
+
+function out(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveData(payload) {
+  const folder   = getOrCreateFolder();
+  const existing = folder.getFilesByName(FILE_NAME);
+  const content  = JSON.stringify(payload, null, 2);
+
+  if (existing.hasNext()) {
+    existing.next().setContent(content);
+  } else {
+    folder.createFile(FILE_NAME, content, MimeType.JSON);
+  }
+  return { ok: true, count: payload && payload.locations ? payload.locations.length : 0 };
+}
+
+function loadData() {
+  const folder   = getOrCreateFolder();
+  const existing = folder.getFilesByName(FILE_NAME);
+
+  if (!existing.hasNext()) return { ok: true, found: false, data: null };
+
+  const file    = existing.next();
+  const content = file.getBlob().getDataAsString();
+  return { ok: true, found: true, data: JSON.parse(content) };
+}
+
+function getOrCreateFolder() {
+  const it = DriveApp.getFoldersByName(FOLDER_NAME);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
+}
+</script>
+
+<!-- =====================================================================
+     MAIN APP SCRIPT
+     ===================================================================== -->
+<script>
+/* =====================================================================
+   CONFIG
+   ===================================================================== */
+const CONFIG = {
+  FOLDER   : 'Saved address',
+  FILE     : 'saved_address.json',
+  LS_DATA  : 'mlt_locations_cache',
+  LS_GMAIL : 'mlt_gmail',
+  LS_AUTO  : 'mlt_autosync',
+  LS_SYNC  : 'mlt_last_sync',
+  LS_URL   : 'mlt_script_url'
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const state = {
+  locations : [],
+  gmail     : '',
+  autoSync  : true,
+  lastSync  : null,
+  scriptUrl : '',
+  dirty     : false,
+  busy      : false,
+  markers   : new Map(),
+  tempLatLng: null,
+  tempMarker: null
+};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+
+function toast(msg, ms = 2600) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function esc(str) {
+  return String(str).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function uid() {
+  return crypto.randomUUID ? crypto.randomUUID()
+       : 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+}
+
+const fmtCoord = n => Number(n).toFixed(5);
+
+function fmtTime(iso) {
+  if (!iso) return 'Never';
+  const d = new Date(iso); if (isNaN(d)) return 'Never';
+  const s = (Date.now() - d.getTime()) / 1000;
+  if (s < 60)    return 'Just now';
+  if (s < 3600)  return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' hr ago';
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/* =====================================================================
+   PRESET APPS SCRIPT — inject into the code viewer
+   ===================================================================== */
+function loadAppsScriptPreset() {
+  const src = document.getElementById('appsScriptSource').textContent
+                .replace(/^\n/, '').replace(/\s+$/, '');
+  document.getElementById('appsScriptCode').textContent = src;
+}
+
+/* Copy button */
+document.getElementById('btnCopyAppsScript').addEventListener('click', async (e) => {
+  const btn  = e.currentTarget;
+  const code = document.getElementById('appsScriptCode').textContent;
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(code);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+
+    btn.classList.add('copied');
+    btn.textContent = '✅ Copied!';
+    toast('Apps Script code copied to clipboard');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = '📋 Copy code';
+    }, 2000);
+  } catch (err) {
+    toast('Copy failed — please select the code manually');
+  }
+});
+
+/* Expand / collapse */
+document.getElementById('codeToggle').addEventListener('click', (e) => {
+  const body   = document.getElementById('codeBody');
+  const toggle = e.currentTarget;
+  const open   = body.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+});
+
+/* =====================================================================
+   LOCAL STORAGE
+   ===================================================================== */
+function loadLocal() {
+  try {
+    state.locations = JSON.parse(localStorage.getItem(CONFIG.LS_DATA) || '[]');
+    if (!Array.isArray(state.locations)) state.locations = [];
+  } catch { state.locations = []; }
+
+  state.gmail     = localStorage.getItem(CONFIG.LS_GMAIL) || '';
+  state.autoSync  = localStorage.getItem(CONFIG.LS_AUTO) !== 'false';
+  state.lastSync  = localStorage.getItem(CONFIG.LS_SYNC) || null;
+  state.scriptUrl = localStorage.getItem(CONFIG.LS_URL) || '';
+}
+
+function saveLocal() {
+  localStorage.setItem(CONFIG.LS_DATA, JSON.stringify(state.locations));
+}
+
+/* =====================================================================
+   MAP
+   ===================================================================== */
+let map;
+
+function initMap() {
+  map = L.map('map', { zoomControl: true }).setView([20, 78], 4);
+
+  L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 21,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    attribution: 'Map tiles © Google'
+  }).addTo(map);
+
+  refreshMarkers();
+}
+
+function popupHtml(loc) {
+  return `<b style="font-size:14px">${esc(loc.title)}</b><br>
+    <span style="font-size:11px;color:#64748b">${fmtCoord(loc.lat)}, ${fmtCoord(loc.lng)}</span><br>
+    <a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}" target="_blank" rel="noopener"
+       style="color:#4f46e5;font-size:12px;text-decoration:none;font-weight:600;display:inline-block;margin-top:6px">
+      Open in Google Maps ↗
+    </a>`;
+}
+
+function refreshMarkers() {
+  state.markers.forEach(m => map.removeLayer(m));
+  state.markers.clear();
+  state.locations.forEach(loc => {
+    const m = L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(popupHtml(loc));
+    state.markers.set(loc.id, m);
+  });
+}
+
+function flyTo(id) {
+  const loc = state.locations.find(l => l.id === id);
+  const m   = state.markers.get(id);
+  if (!loc) return;
+  map.setView([loc.lat, loc.lng], 16, { animate: true });
+  if (m) m.openPopup();
+}
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function render() {
+  $('#tabBadge').textContent = state.locations.length;
+
+  const list = $('#locationList');
+  if (!state.locations.length) {
+    list.innerHTML = `<div class="empty">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      <b>No saved locations yet</b>
+      Tap “Get My Location” to begin.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = state.locations
+    .slice()
+    .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
+    .map(l => `
+      <div class="loc-item" data-id="${l.id}">
+        <div class="info">
+          <div class="title">${esc(l.title)}</div>
+          <div class="coords">${fmtCoord(l.lat)}, ${fmtCoord(l.lng)}</div>
+        </div>
+        <div class="acts">
+          <button data-act="edit" data-id="${l.id}" title="Rename">✏️</button>
+          <button data-act="del"  data-id="${l.id}" class="del" title="Delete">🗑️</button>
+        </div>
+      </div>`).join('');
+}
+
+$('#locationList').addEventListener('click', e => {
+  const item = e.target.closest('.loc-item');
+  if (!item) return;
+  const id  = item.dataset.id;
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) { flyTo(id); return; }
+
+  if (btn.dataset.act === 'edit') {
+    const loc = state.locations.find(l => l.id === id);
+    if (!loc) return;
+    const t = prompt('Edit title for this location:', loc.title);
+    if (t !== null && t.trim()) {
+      loc.title = t.trim();
+      loc.updatedAt = new Date().toISOString();
+      commit('Location renamed');
+    }
+  }
+  if (btn.dataset.act === 'del') {
+    const loc = state.locations.find(l => l.id === id);
+    if (!loc) return;
+    if (confirm(`Delete “${loc.title}”?`)) {
+      state.locations = state.locations.filter(l => l.id !== id);
+      commit('Location deleted');
+    }
+  }
+});
+
+/* =====================================================================
+   COMMIT
+   ===================================================================== */
+function commit(message) {
+  saveLocal();
+  render();
+  refreshMarkers();
+  state.dirty = true;
+  updateStatus();
+  if (message) toast(message);
+  if (state.autoSync && state.scriptUrl) scheduleAutoPush();
+}
+
+let autoPushTimer = null;
+function scheduleAutoPush() {
+  clearTimeout(autoPushTimer);
+  autoPushTimer = setTimeout(() => {
+    pushToDrive(true).catch(err => { console.warn(err); updateStatus(); });
+  }, 1200);
+}
+
+/* =====================================================================
+   STATUS
+   ===================================================================== */
+function updateStatus() {
+  const dot = $('#statusDot');
+  const txt = $('#statusText');
+  dot.className = 'dot';
+
+  if (state.busy)              { dot.classList.add('busy'); txt.textContent = 'Syncing with Drive…'; }
+  else if (!state.scriptUrl)   { txt.textContent = 'Bridge URL not configured'; }
+  else if (state.dirty)        { dot.classList.add('dirty'); txt.textContent = 'Ready — changes pending'; }
+  else                         { dot.classList.add('on'); txt.textContent = 'Ready — all changes saved'; }
+
+  const conn = $('#connState');
+  if (conn) {
+    if (state.busy)          conn.innerHTML = '<span class="pill warn">Syncing</span>';
+    else if (state.scriptUrl) conn.innerHTML = '<span class="pill ok">Configured</span>';
+    else                     conn.innerHTML = '<span class="pill off">Not set</span>';
+  }
+  const ls = $('#lastSyncTime');
+  if (ls) ls.textContent = fmtTime(state.lastSync);
+}
+
+/* =====================================================================
+   TABS
+   ===================================================================== */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('#tab-' + btn.dataset.tab).classList.add('active');
+    setTimeout(() => map && map.invalidateSize(), 60);
+  });
+});
+
+/* =====================================================================
+   GEOLOCATION
+   ===================================================================== */
+$('#btnTrack').addEventListener('click', () => {
+  if (!navigator.geolocation) return toast('Geolocation is not supported');
+  toast('Getting your location…');
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      state.tempLatLng = { lat, lng };
+
+      if (state.tempMarker) map.removeLayer(state.tempMarker);
+      state.tempMarker = L.marker([lat, lng], { draggable: true })
+        .addTo(map)
+        .bindPopup('You are here — drag to fine-tune')
+        .openPopup();
+
+      state.tempMarker.on('dragend', ev => {
+        const p = ev.target.getLatLng();
+        state.tempLatLng = { lat: p.lat, lng: p.lng };
+      });
+
+      map.setView([lat, lng], 16);
+      $('#btnSaveCurrent').disabled = false;
+      toast('Location found');
+    },
+    err => {
+      const msgs = { 1:'Permission denied', 2:'Position unavailable', 3:'Timed out' };
+      toast('Location error: ' + (msgs[err.code] || err.message));
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+});
+
+$('#btnSaveCurrent').addEventListener('click', () => {
+  if (!state.tempLatLng) return;
+  const title = prompt('Enter a title for this location:', 'My place');
+  if (!title || !title.trim()) return;
+
+  const now = new Date().toISOString();
+  state.locations.push({
+    id: uid(), title: title.trim(),
+    lat: state.tempLatLng.lat, lng: state.tempLatLng.lng,
+    createdAt: now, updatedAt: now
+  });
+
+  if (state.tempMarker) { map.removeLayer(state.tempMarker); state.tempMarker = null; }
+  state.tempLatLng = null;
+  $('#btnSaveCurrent').disabled = true;
+  commit('Location saved');
+});
+
+/* =====================================================================
+   SETTINGS
+   ===================================================================== */
+$('#btnSaveGmail').addEventListener('click', () => {
+  const v = $('#gmailInput').value.trim();
+  if (!v) return toast('Please enter a Gmail ID');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return toast('That doesn’t look like a valid email');
+  state.gmail = v;
+  localStorage.setItem(CONFIG.LS_GMAIL, v);
+  state.dirty = true;
+  updateStatus();
+  toast('Gmail ID saved');
+  if (state.autoSync && state.scriptUrl) scheduleAutoPush();
+});
+
+$('#btnSaveScript').addEventListener('click', () => {
+  const v = $('#scriptUrlInput').value.trim();
+  if (!v) return toast('Please paste your Apps Script Web App URL');
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec/.test(v))
+    return toast('URL should look like …/macros/s/…/exec');
+  state.scriptUrl = v;
+  localStorage.setItem(CONFIG.LS_URL, v);
+  updateStatus();
+  toast('Script URL saved');
+});
+
+$('#btnTestScript').addEventListener('click', async () => {
+  if (!state.scriptUrl) return toast('Save a Script URL first');
+  try {
+    const res = await callScript('ping');
+    if (res.ok) toast('✅ Bridge connected');
+    else        toast('Bridge responded: ' + (res.error || 'unknown'));
+  } catch (e) {
+    toast('Connection failed: ' + e.message);
+  }
+});
+
+$('#autoSync').addEventListener('change', e => {
+  state.autoSync = e.target.checked;
+  localStorage.setItem(CONFIG.LS_AUTO, String(state.autoSync));
+  toast(state.autoSync ? 'Auto-sync enabled' : 'Auto-sync disabled');
+  if (state.autoSync && state.scriptUrl && state.dirty) scheduleAutoPush();
+});
+
+/* =====================================================================
+   APPS SCRIPT BRIDGE
+   ===================================================================== */
+async function callScript(action, payload) {
+  if (!state.scriptUrl) throw new Error('Script URL not configured');
+
+  const res = await fetch(state.scriptUrl, {
+    method : 'POST',
+    body   : JSON.stringify({ action, payload })
+  });
+
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data.ok === false) throw new Error(data.error || 'Script error');
+  return data;
+}
+
+/* =====================================================================
+   DRIVE PUSH / PULL
+   ===================================================================== */
+function buildPayload() {
+  return {
+    app       : 'MyLocationTracker',
+    version   : 2,
+    gmail     : state.gmail || null,
+    updatedAt : new Date().toISOString(),
+    count     : state.locations.length,
+    locations : state.locations
+  };
+}
+
+async function pushToDrive(silent = false) {
+  if (state.busy) return;
+  if (!state.scriptUrl) { if (!silent) toast('Save your Apps Script URL first'); return; }
+
+  state.busy = true; updateStatus();
+
+  try {
+    const res = await callScript('save', buildPayload());
+    state.dirty   = false;
+    state.lastSync = new Date().toISOString();
+    localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
+    if (!silent) toast(`Synced ${res.count ?? state.locations.length} location(s) to Drive`);
+  } catch (err) {
+    console.error(err);
+    if (!silent) toast('Sync failed: ' + err.message);
+  } finally {
+    state.busy = false;
+    updateStatus();
+  }
+}
+
+async function pullFromDrive() {
+  if (state.busy) return;
+  if (!state.scriptUrl) return toast('Save your Apps Script URL first');
+
+  state.busy = true; updateStatus();
+
+  try {
+    const res = await callScript('load');
+    if (!res.found) { toast('No saved file found in “Saved address”'); return; }
+
+    const data   = res.data || {};
+    const remote = Array.isArray(data.locations) ? data.locations
+                 : Array.isArray(data)            ? data : [];
+
+    if (!remote.length) { toast('Drive file contains no locations'); return; }
+
+    const byId = new Map(state.locations.map(l => [l.id, l]));
+    let added = 0, updated = 0;
+
+    remote.forEach(loc => {
+      if (!loc || loc.id == null || typeof loc.lat !== 'number') return;
+      const existing = byId.get(loc.id);
+      if (!existing) { byId.set(loc.id, loc); added++; }
+      else {
+        const a = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        const b = new Date(loc.updatedAt      || loc.createdAt      || 0).getTime();
+        if (b > a) { byId.set(loc.id, loc); updated++; }
+      }
+    });
+
+    state.locations = [...byId.values()];
+    if (data.gmail && !state.gmail) {
+      state.gmail = data.gmail;
+      localStorage.setItem(CONFIG.LS_GMAIL, data.gmail);
+      $('#gmailInput').value = data.gmail;
+    }
+
+    state.dirty    = false;
+    state.lastSync = new Date().toISOString();
+    localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
+    saveLocal();
+    render();
+    refreshMarkers();
+    toast(`Import complete — ${added} new, ${updated} updated`);
+  } catch (err) {
+    console.error(err);
+    toast('Import failed: ' + err.message);
+  } finally {
+    state.busy = false;
+    updateStatus();
+  }
+}
+
+/* =====================================================================
+   LOCAL DATA
+   ===================================================================== */
+$('#btnExportLocal').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(buildPayload(), null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `locations_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported local JSON');
+});
+
+$('#btnClearLocal').addEventListener('click', () => {
+  if (!confirm('Clear all locally cached locations? (Drive copy is not affected)')) return;
+  state.locations = [];
+  state.dirty = true;
+  saveLocal();
+  render();
+  refreshMarkers();
+  updateStatus();
+  toast('Local data cleared');
+});
+
+/* =====================================================================
+   BUTTONS
+   ===================================================================== */
+$('#btnSync').addEventListener('click', () => pushToDrive(false));
+$('#btnImport').addEventListener('click', () => pullFromDrive());
+
+$('#btnDisconnect').addEventListener('click', () => {
+  if (!confirm('Clear the saved Apps Script URL?')) return;
+  state.scriptUrl = '';
+  localStorage.removeItem(CONFIG.LS_URL);
+  updateStatus();
+  toast('Script URL cleared');
+});
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+window.addEventListener('load', () => {
+  loadAppsScriptPreset();
+  loadLocal();
+
+  $('#gmailInput').value     = state.gmail;
+  $('#scriptUrlInput').value = state.scriptUrl;
+  $('#autoSync').checked     = state.autoSync;
+
+  initMap();
+  render();
+  updateStatus();
+
+  window.addEventListener('beforeunload', e => {
+    if (state.dirty && state.scriptUrl) { e.preventDefault(); e.returnValue = ''; }
+  });
+});
+</script>
+</body>
+</html>
