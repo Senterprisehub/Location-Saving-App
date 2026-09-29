@@ -46,7 +46,6 @@
 html,body{height:100%}
 body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden;background:var(--bg-app);color:var(--text);-webkit-font-smoothing:antialiased}
 
-/* ============ MAP ============ */
 #map{flex:1;height:100%;background:var(--bg-panel-2)}
 .leaflet-container{font-family:inherit}
 .leaflet-popup-content-wrapper{border-radius:var(--radius)!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border)!important;background:var(--bg-panel)!important;color:var(--text)!important}
@@ -57,18 +56,16 @@ body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow
 .leaflet-control-zoom a:hover{background:var(--bg-hover)!important}
 .leaflet-control-attribution{background:var(--bg-glass)!important;backdrop-filter:blur(8px);color:var(--text-sub)!important;border-radius:var(--radius-sm) 0 0 0!important;font-size:10px!important}
 
-/* ============ SIDEBAR ============ */
 #sidebar{width:380px;min-width:380px;height:100%;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:-8px 0 30px -20px rgba(15,23,42,.25);z-index:1000;position:relative}
 
-/* ============ STATUS ============ */
 #statusBar{padding:12px 20px;font-size:12px;font-weight:500;color:var(--text-muted);background:var(--bg-panel-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex:none}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--text-sub);flex:none;transition:background .3s}
 .dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-soft)}
 .dot.dirty{background:var(--warning);box-shadow:0 0 0 3px var(--warning-soft)}
+.dot.err{background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
 .dot.busy{background:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);animation:pulse 1.4s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 3px var(--primary-soft)}50%{box-shadow:0 0 0 6px transparent}}
 
-/* ============ TABS ============ */
 #tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--bg-panel);border-bottom:1px solid var(--border);flex:none}
 .tab-btn{flex:1;padding:11px 12px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-radius:var(--radius-sm) var(--radius-sm) 0 0;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;transition:color .2s,background .2s}
 .tab-btn::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2.5px;background:var(--primary);border-radius:3px 3px 0 0;transform:scaleX(0);transition:transform .3s var(--ease-out)}
@@ -78,7 +75,6 @@ body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow
 .tab-btn .badge{background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center;line-height:1.4}
 .tab-btn:not(.active) .badge{background:var(--border-strong);color:var(--text-muted)}
 
-/* ============ PANELS ============ */
 .tab-panel{display:none;flex:1;overflow-y:auto;flex-direction:column}
 .tab-panel.active{display:flex;animation:fadeUp .35s var(--ease-out)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -87,7 +83,6 @@ body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow
 .panel h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;font-weight:700}
 .panel h4{font-size:12px;font-weight:700;color:var(--text);margin:16px 0 10px;letter-spacing:-.01em}
 
-/* ============ BUTTONS ============ */
 button{font-family:inherit;padding:11px 16px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:-.01em;transition:transform .15s,box-shadow .2s,opacity .15s,background .2s;box-shadow:var(--shadow-glow);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
 button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 26px -8px var(--primary-glow),0 4px 10px -2px var(--primary-glow)}
 button:active:not(:disabled){transform:translateY(0)}
@@ -103,20 +98,17 @@ button.copy-btn{padding:6px 12px;font-size:11.5px;font-weight:600;background:rgb
 button.copy-btn:hover:not(:disabled){background:rgba(255,255,255,.2);box-shadow:none;transform:none}
 button.copy-btn.copied{background:var(--success);border-color:var(--success);color:#fff}
 
-/* ============ INPUTS ============ */
 input[type="email"],input[type="text"],input[type="url"]{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:8px;background:var(--bg-panel-2);color:var(--text);transition:border-color .2s,box-shadow .2s,background .2s}
 input::placeholder{color:var(--text-sub)}
 input:hover{border-color:var(--border-strong)}
 input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);box-shadow:0 0 0 4px var(--primary-soft)}
 
-/* ============ CHECKBOX ============ */
 .checkrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);margin:14px 0 4px;cursor:pointer;user-select:none}
 .checkrow input{appearance:none;width:38px;height:22px;background:var(--border-strong);border-radius:22px;position:relative;cursor:pointer;transition:background .25s var(--ease);flex:none;margin:0}
 .checkrow input::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .25s var(--ease-out)}
 .checkrow input:checked{background:var(--primary)}
 .checkrow input:checked::after{transform:translateX(16px)}
 
-/* ============ LOCATION LIST ============ */
 #locationList{flex:1;overflow-y:auto;padding:14px 16px}
 .empty{color:var(--text-sub);font-size:13px;text-align:center;padding:48px 20px;line-height:1.6}
 .empty svg{display:block;margin:0 auto 16px;opacity:.35}
@@ -136,24 +128,23 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .loc-item .acts button.dir:hover{background:var(--primary);color:#fff}
 .loc-item .acts button.del:hover{background:var(--danger-soft);color:var(--danger)}
 
-/* ============ INFO CARDS ============ */
 .info-card{background:var(--bg-panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;font-size:13px;color:var(--text);line-height:1.5;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .info-card + .info-card{margin-top:8px}
 .info-card .k{color:var(--text-sub);font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;flex:none}
 .info-card .v{font-weight:600;color:var(--text);text-align:right;word-break:break-word;font-size:12.5px}
+.info-card .v.small{font-size:11.5px;font-weight:500}
 
-/* ============ PILLS ============ */
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.02em;text-transform:uppercase}
 .pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
 .pill.ok{background:var(--success-soft);color:var(--success)}
 .pill.off{background:var(--bg-hover);color:var(--text-muted)}
 .pill.warn{background:var(--warning-soft);color:var(--warning)}
+.pill.err{background:var(--danger-soft);color:var(--danger)}
 
 .hint{font-size:11.5px;color:var(--text-sub);margin-top:10px;line-height:1.55}
 .hint code{background:var(--bg-hover);color:var(--primary);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px}
 .divider{height:1px;background:var(--border);margin:16px -20px}
 
-/* ============ CODE BLOCK ============ */
 .code-section{background:var(--code-bg);border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:var(--shadow-sm)}
 .code-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06)}
 .code-header .file-info{display:flex;align-items:center;gap:8px;min-width:0}
@@ -170,7 +161,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .code-toggle .chev{transition:transform .3s var(--ease-out);display:inline-block;color:var(--code-accent)}
 .code-toggle.open .chev{transform:rotate(180deg)}
 
-/* ============ STEPPER ============ */
 .stepper{counter-reset:step;position:relative;padding:4px 0}
 .step{position:relative;padding:0 0 20px 40px;counter-increment:step}
 .step:last-child{padding-bottom:0}
@@ -183,7 +173,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .step-desc a:hover{text-decoration:underline}
 .step-cta{margin-top:8px}
 
-/* ============ CALLOUTS ============ */
 .callout{border-radius:var(--radius-sm);padding:11px 13px;font-size:12px;line-height:1.55;display:flex;gap:10px;align-items:flex-start;margin-top:10px}
 .callout .ico{font-size:14px;line-height:1.3;flex:none}
 .callout .body{flex:1;min-width:0}
@@ -194,21 +183,33 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .callout.info .body b{color:var(--primary)}
 .callout.success{background:var(--success-soft);border-left:3px solid var(--success);color:var(--text)}
 .callout.success .body b{color:var(--success)}
+.callout.danger{background:var(--danger-soft);border-left:3px solid var(--danger);color:var(--text)}
+.callout.danger .body b{color:var(--danger)}
 
-/* ============ SECTION BADGE ============ */
 .step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:var(--primary);color:#fff;font-size:11px;font-weight:800;margin-right:8px;letter-spacing:-.02em}
 .panel h3.with-badge{display:flex;align-items:center}
+
+/* ============ DIAGNOSTICS ============ */
+.diag-results{margin-top:12px;display:none}
+.diag-results.show{display:block;animation:fadeUp .3s var(--ease-out)}
+.diag-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;font-size:12px;border-radius:var(--radius-sm);margin-bottom:6px;background:var(--bg-panel-2);border:1px solid var(--border);line-height:1.5}
+.diag-row:last-child{margin-bottom:0}
+.diag-row .icon{flex:none;font-size:13px;line-height:1.4}
+.diag-row .text{flex:1;min-width:0}
+.diag-row .label{font-weight:600;color:var(--text)}
+.diag-row .detail{color:var(--text-muted);font-size:11px;margin-top:3px;word-break:break-word;font-family:'JetBrains Mono',monospace;line-height:1.5}
+.diag-row.pass{border-left:3px solid var(--success)}
+.diag-row.fail{border-left:3px solid var(--danger);background:var(--danger-soft)}
+.diag-row.warn{border-left:3px solid var(--warning);background:var(--warning-soft)}
 
 /* ============ TOAST ============ */
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(24px) scale(.96);background:var(--text);color:var(--bg-panel);padding:13px 22px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .28s var(--ease-out),transform .35s var(--ease-out);z-index:9999;max-width:80vw;box-shadow:var(--shadow-lg)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 @media (prefers-color-scheme: dark){#toast{background:var(--bg-panel);color:var(--text);border:1px solid var(--border-strong)}}
 
-/* ============ SCROLLBAR ============ */
 #locationList::-webkit-scrollbar,.tab-panel::-webkit-scrollbar{width:8px}
 #locationList::-webkit-scrollbar-thumb,.tab-panel::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;border:2px solid var(--bg-panel)}
 
-/* ============ MOBILE ============ */
 @media (max-width:720px){
   body{flex-direction:column}
   #sidebar{width:100%;min-width:0;height:60%;border-left:none;border-top:1px solid var(--border);border-radius:var(--radius-xl) var(--radius-xl) 0 0;margin-top:-20px;box-shadow:0 -12px 30px -12px rgba(15,23,42,.2)}
@@ -315,46 +316,40 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 
         <div class="step">
           <div class="step-title">Create a new project</div>
-          <div class="step-desc">
-            Click <code>+ New project</code> on the top-left. Apps Script will open a blank
-            <code>Code.gs</code> editor for you.
-          </div>
+          <div class="step-desc">Click <code>+ New project</code> on the top-left.</div>
         </div>
 
         <div class="step">
           <div class="step-title">Paste the code</div>
           <div class="step-desc">
-            Select everything in the editor (Ctrl/⌘ + A), delete it, then paste the code you copied in
-            <b>Step 1</b> (Ctrl/⌘ + V).
+            Select everything (Ctrl/⌘ + A), delete, then paste the code from <b>Step 1</b>.
           </div>
         </div>
 
         <div class="step">
           <div class="step-title">Save the project</div>
           <div class="step-desc">
-            Press <code>Ctrl + S</code> (Windows) or <code>⌘ + S</code> (Mac), or click the
-            <b>💾 Save</b> icon in the toolbar.
+            Press <code>Ctrl + S</code> / <code>⌘ + S</code>.
           </div>
         </div>
 
         <div class="step">
           <div class="step-title">Start a new deployment</div>
           <div class="step-desc">
-            Click the blue <b>Deploy</b> button (top-right) → select <b>New deployment</b>.
+            Click the blue <b>Deploy</b> button (top-right) → <b>New deployment</b>.
           </div>
         </div>
 
         <div class="step">
           <div class="step-title">Choose "Web app" as the type</div>
           <div class="step-desc">
-            Click the <b>⚙ gear icon</b> next to "Select type" → choose <b>Web app</b>.
+            Click the <b>⚙ gear icon</b> next to "Select type" → <b>Web app</b>.
           </div>
         </div>
 
         <div class="step">
           <div class="step-title">Set permissions</div>
           <div class="step-desc">
-            Fill in the fields exactly as shown:
             <br>• <b>Execute as:</b> <code>Me (your@gmail.com)</code>
             <br>• <b>Who has access:</b> <code>Anyone</code>
           </div>
@@ -364,7 +359,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
             <div class="body">
               <b>Important</b>
               "Who has access" must be <b>Anyone</b> — otherwise the browser cannot reach
-              your Web App and sync will fail with a CORS error.
+              your Web App and sync will fail.
             </div>
           </div>
         </div>
@@ -372,33 +367,36 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
         <div class="step">
           <div class="step-title">Authorize the script</div>
           <div class="step-desc">
-            Click <b>Deploy</b>. Google will ask for permission the first time:
+            Click <b>Deploy</b>. Google will ask for permission:
             <br>1. <b>Authorize access</b>
             <br>2. Choose your Google account
             <br>3. Click <b>Advanced</b> → <b>Go to [project] (unsafe)</b>
             <br>4. Click <b>Allow</b>
-          </div>
-
-          <div class="callout info">
-            <span class="ico">ℹ️</span>
-            <div class="body">
-              <b>Why "unsafe"?</b>
-              That warning appears for any personal Apps Script. Since you wrote this script
-              yourself, it is safe to proceed.
-            </div>
           </div>
         </div>
 
         <div class="step">
           <div class="step-title">Copy the Web App URL</div>
           <div class="step-desc">
-            After deployment, a dialog shows the <b>Web app URL</b>. It looks like:
+            Copy the URL from the deployment dialog. It looks like:
             <br><code>https://script.google.com/macros/s/AKfy…/exec</code>
-            <br>Click the <b>Copy</b> button next to it.
           </div>
-          <div class="step-desc" style="margin-top:6px;">
-            You can also find this URL later at
-            <b>Deploy → Manage deployments</b>.
+
+          <div class="callout info">
+            <span class="ico">ℹ️</span>
+            <div class="body">
+              <b>Use the /exec URL</b>
+              Never use the <code>/dev</code> test URL — it only works while you are logged in
+              and will block sync for everyone else.
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">⚠ After editing code, re-deploy</div>
+          <div class="step-desc">
+            If you ever change <code>Code.gs</code>, existing deployments keep the old code.
+            Go to <b>Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy</b>.
           </div>
         </div>
 
@@ -408,8 +406,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
         <span class="ico">✅</span>
         <div class="body">
           <b>Almost done</b>
-          Paste the URL you copied into the <b>Bridge URL</b> field just below and click
-          <b>Save Script URL</b>.
+          Paste the URL into <b>Step 3</b> below and click <b>Save Script URL</b>.
         </div>
       </div>
     </div>
@@ -419,7 +416,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <input type="url" id="scriptUrlInput"
              placeholder="https://script.google.com/macros/s/…/exec" />
       <button id="btnSaveScript" class="secondary block">Save Script URL</button>
-      <button id="btnTestScript" class="ghost block">🔌 Test Connection</button>
 
       <label class="checkrow">
         <input type="checkbox" id="autoSync" checked />
@@ -431,6 +427,17 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <button id="btnSync" class="block">☁️ Sync to Drive</button>
       <button id="btnImport" class="secondary block">📥 Import from Drive</button>
       <button id="btnDisconnect" class="ghost block">🔓 Clear Script URL</button>
+    </div>
+
+    <!-- ============ DIAGNOSTICS ============ -->
+    <div class="panel">
+      <h3>🔍 Diagnostics</h3>
+      <button id="btnDiagnose" class="block">▶ Run Diagnostics</button>
+      <div class="hint" style="margin-top:8px;">
+        Checks URL format, bridge reachability, and Drive read access step-by-step.
+        Use this first if sync is failing.
+      </div>
+      <div class="diag-results" id="diagResults"></div>
     </div>
 
     <div class="panel">
@@ -446,6 +453,10 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <div class="info-card">
         <span class="k">Last Sync</span>
         <span class="v" id="lastSyncTime">Never</span>
+      </div>
+      <div class="info-card" id="lastErrorCard" style="display:none;">
+        <span class="k">Last Error</span>
+        <span class="v small" id="lastErrorText">—</span>
       </div>
     </div>
 
@@ -463,11 +474,11 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 <div id="toast"></div>
 
 <!-- =====================================================================
-     Apps Script preset
+     Apps Script preset — updated to read from e.parameter
      ===================================================================== -->
 <script type="text/plain" id="appsScriptSource">
 /* ============================================================
-   Location Tracker — Drive Bridge
+   Location Tracker — Drive Bridge (v2)
    Deploy as Web App:
      Execute as      : Me
      Who has access  : Anyone
@@ -480,21 +491,36 @@ function doGet(e)  { return handle(e); }
 
 function handle(e) {
   try {
-    const q    = (e && e.parameter) ? e.parameter : {};
-    const body = (e && e.postData && e.postData.contents)
-                   ? JSON.parse(e.postData.contents) : {};
-    const action = q.action || body.action;
-    let result;
+    var action = null;
+    var body   = {};
 
+    // 1. Form-encoded body (preferred — arrives via e.parameter)
+    if (e && e.parameter && e.parameter.action) {
+      action = e.parameter.action;
+      if (e.parameter.payload) {
+        try { body = JSON.parse(e.parameter.payload); } catch (_) { body = {}; }
+      }
+    }
+    // 2. JSON body fallback
+    else if (e && e.postData && e.postData.contents) {
+      try {
+        const parsed = JSON.parse(e.postData.contents);
+        action = parsed.action;
+        body   = parsed.payload || {};
+      } catch (_) {}
+    }
+
+    var result;
     switch (action) {
-      case 'ping': result = { ok: true, message: 'Connected to Drive bridge' }; break;
-      case 'save': result = saveData(body.payload);                              break;
-      case 'load': result = loadData();                                          break;
+      case 'ping': result = { ok: true, message: 'Connected to Drive bridge', version: 2 }; break;
+      case 'echo': result = { ok: true, echoed: body };                                     break;
+      case 'save': result = saveData(body);                                                 break;
+      case 'load': result = loadData();                                                     break;
       default:     result = { ok: false, error: 'Unknown action: ' + action };
     }
     return out(result);
   } catch (err) {
-    return out({ ok: false, error: String(err) });
+    return out({ ok: false, error: String(err && err.message ? err.message : err) });
   }
 }
 
@@ -514,7 +540,11 @@ function saveData(payload) {
   } else {
     folder.createFile(FILE_NAME, content, MimeType.JSON);
   }
-  return { ok: true, count: payload && payload.locations ? payload.locations.length : 0 };
+  return {
+    ok: true,
+    count: payload && payload.locations ? payload.locations.length : 0,
+    savedAt: new Date().toISOString()
+  };
 }
 
 function loadData() {
@@ -538,9 +568,6 @@ function getOrCreateFolder() {
      MAIN APP SCRIPT
      ===================================================================== -->
 <script>
-/* =====================================================================
-   CONFIG
-   ===================================================================== */
 const CONFIG = {
   FOLDER   : 'Saved address',
   FILE     : 'saved_address.json',
@@ -548,17 +575,16 @@ const CONFIG = {
   LS_GMAIL : 'mlt_gmail',
   LS_AUTO  : 'mlt_autosync',
   LS_SYNC  : 'mlt_last_sync',
-  LS_URL   : 'mlt_script_url'
+  LS_URL   : 'mlt_script_url',
+  LS_ERR   : 'mlt_last_error'
 };
 
-/* =====================================================================
-   STATE
-   ===================================================================== */
 const state = {
   locations : [],
   gmail     : '',
   autoSync  : true,
   lastSync  : null,
+  lastError : null,
   scriptUrl : '',
   dirty     : false,
   busy      : false,
@@ -567,9 +593,6 @@ const state = {
   tempMarker: null
 };
 
-/* =====================================================================
-   HELPERS
-   ===================================================================== */
 const $ = s => document.querySelector(s);
 
 function toast(msg, ms = 2600) {
@@ -602,24 +625,33 @@ function fmtTime(iso) {
   return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function setLastError(msg) {
+  state.lastError = msg || null;
+  if (state.lastError) {
+    localStorage.setItem(CONFIG.LS_ERR, state.lastError);
+    $('#lastErrorCard').style.display = 'flex';
+    $('#lastErrorText').textContent = state.lastError;
+  } else {
+    localStorage.removeItem(CONFIG.LS_ERR);
+    $('#lastErrorCard').style.display = 'none';
+  }
+}
+
 /* =====================================================================
-   GOOGLE MAPS URL HELPERS
+   GOOGLE MAPS HELPERS
    ===================================================================== */
-/** Directions from the device's current location → the target. */
 function directionsUrl(loc) {
   return 'https://www.google.com/maps/dir/?api=1'
        + '&destination=' + encodeURIComponent(loc.lat + ',' + loc.lng)
        + '&travelmode=driving';
 }
-
-/** Open a location on the map (single pin). */
 function viewUrl(loc) {
   return 'https://www.google.com/maps/search/?api=1'
        + '&query=' + encodeURIComponent(loc.lat + ',' + loc.lng);
 }
 
 /* =====================================================================
-   PRESET APPS SCRIPT
+   APPS SCRIPT PRESET
    ===================================================================== */
 function loadAppsScriptPreset() {
   const src = document.getElementById('appsScriptSource').textContent
@@ -676,7 +708,8 @@ function loadLocal() {
   state.gmail     = localStorage.getItem(CONFIG.LS_GMAIL) || '';
   state.autoSync  = localStorage.getItem(CONFIG.LS_AUTO) !== 'false';
   state.lastSync  = localStorage.getItem(CONFIG.LS_SYNC) || null;
-  state.scriptUrl = localStorage.getItem(CONFIG.LS_URL) || '';
+  state.lastError = localStorage.getItem(CONFIG.LS_ERR)  || null;
+  state.scriptUrl = localStorage.getItem(CONFIG.LS_URL)  || '';
 }
 
 function saveLocal() {
@@ -780,13 +813,10 @@ $('#locationList').addEventListener('click', e => {
   if (btn.dataset.act === 'dir') {
     const loc = state.locations.find(l => l.id === id);
     if (!loc) return;
-    // Opens Google Maps (or the mobile Maps app) with directions
-    // from the device's current location to this saved place.
     window.open(directionsUrl(loc), '_blank', 'noopener');
     toast('Opening directions in Google Maps…');
     return;
   }
-
   if (btn.dataset.act === 'edit') {
     const loc = state.locations.find(l => l.id === id);
     if (!loc) return;
@@ -838,12 +868,14 @@ function updateStatus() {
 
   if (state.busy)              { dot.classList.add('busy'); txt.textContent = 'Syncing with Drive…'; }
   else if (!state.scriptUrl)   { txt.textContent = 'Bridge URL not configured'; }
+  else if (state.lastError)    { dot.classList.add('err'); txt.textContent = 'Sync error — see Diagnostics'; }
   else if (state.dirty)        { dot.classList.add('dirty'); txt.textContent = 'Ready — changes pending'; }
   else                         { dot.classList.add('on'); txt.textContent = 'Ready — all changes saved'; }
 
   const conn = $('#connState');
   if (conn) {
     if (state.busy)          conn.innerHTML = '<span class="pill warn">Syncing</span>';
+    else if (state.lastError) conn.innerHTML = '<span class="pill err">Error</span>';
     else if (state.scriptUrl) conn.innerHTML = '<span class="pill ok">Configured</span>';
     else                     conn.innerHTML = '<span class="pill off">Not set</span>';
   }
@@ -919,7 +951,7 @@ $('#btnSaveCurrent').addEventListener('click', () => {
 });
 
 /* =====================================================================
-   SETTINGS
+   SETTINGS ACTIONS
    ===================================================================== */
 $('#btnSaveGmail').addEventListener('click', () => {
   const v = $('#gmailInput').value.trim();
@@ -934,25 +966,20 @@ $('#btnSaveGmail').addEventListener('click', () => {
 });
 
 $('#btnSaveScript').addEventListener('click', () => {
-  const v = $('#scriptUrlInput').value.trim();
+  let v = $('#scriptUrlInput').value.trim();
+  // Be forgiving: strip surrounding whitespace and any accidental quotes
+  v = v.replace(/^["']|["']$/g, '');
   if (!v) return toast('Please paste your Apps Script Web App URL');
-  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec/.test(v))
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/(exec|dev)/.test(v))
     return toast('URL should look like …/macros/s/…/exec');
+  if (v.includes('/dev')) {
+    toast('Warning: /dev URL only works while logged in. Use the /exec URL.');
+  }
   state.scriptUrl = v;
   localStorage.setItem(CONFIG.LS_URL, v);
+  setLastError(null);
   updateStatus();
   toast('Script URL saved');
-});
-
-$('#btnTestScript').addEventListener('click', async () => {
-  if (!state.scriptUrl) return toast('Save a Script URL first');
-  try {
-    const res = await callScript('ping');
-    if (res.ok) toast('✅ Bridge connected');
-    else        toast('Bridge responded: ' + (res.error || 'unknown'));
-  } catch (e) {
-    toast('Connection failed: ' + e.message);
-  }
 });
 
 $('#autoSync').addEventListener('change', e => {
@@ -963,21 +990,163 @@ $('#autoSync').addEventListener('change', e => {
 });
 
 /* =====================================================================
-   APPS SCRIPT BRIDGE
+   APPS SCRIPT BRIDGE — URL-ENCODED, NO PREFLIGHT
    ===================================================================== */
 async function callScript(action, payload) {
   if (!state.scriptUrl) throw new Error('Script URL not configured');
 
+  // URLSearchParams → Content-Type: application/x-www-form-urlencoded
+  // This is a "simple request" — no CORS preflight, no JSON body.
+  const params = new URLSearchParams();
+  params.append('action', action);
+  if (payload !== undefined) {
+    params.append('payload', JSON.stringify(payload));
+  }
+
+  const t0  = performance.now();
   const res = await fetch(state.scriptUrl, {
     method : 'POST',
-    body   : JSON.stringify({ action, payload })
+    body   : params
   });
+  const ms  = Math.round(performance.now() - t0);
+  const text = await res.text();
 
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} (${ms} ms) — ${text.slice(0, 200)}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    // Almost always means the Web App returned an HTML login page
+    const isHtml = /<!DOCTYPE|<html/i.test(text);
+    const hint = isHtml
+      ? ' (Got HTML instead of JSON — check “Who has access” is set to Anyone and re-deploy.)'
+      : '';
+    throw new Error('Invalid response from bridge' + hint);
+  }
+
   if (data.ok === false) throw new Error(data.error || 'Script error');
   return data;
 }
+
+/* =====================================================================
+   DIAGNOSTICS
+   ===================================================================== */
+function diagLog(rows, pass, label, detail) {
+  rows.push({ pass, label, detail: detail || '' });
+}
+
+function renderDiag(rows) {
+  const el = $('#diagResults');
+  el.innerHTML = rows.map(r => {
+    const cls   = r.pass === true ? 'pass' : r.pass === 'warn' ? 'warn' : 'fail';
+    const icon  = r.pass === true ? '✅' : r.pass === 'warn' ? '⚠️' : '❌';
+    return `<div class="diag-row ${cls}">
+      <span class="icon">${icon}</span>
+      <div class="text">
+        <div class="label">${esc(r.label)}</div>
+        ${r.detail ? `<div class="detail">${esc(r.detail)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  el.classList.add('show');
+}
+
+async function runDiagnostics() {
+  const rows = [];
+  const btn  = $('#btnDiagnose');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running…';
+
+  try {
+    // 1. URL present
+    if (!state.scriptUrl) {
+      diagLog(rows, false, 'Bridge URL saved', 'Go to Step 3 and paste your Web App URL.');
+      renderDiag(rows);
+      return;
+    }
+    diagLog(rows, true, 'Bridge URL saved', state.scriptUrl);
+
+    // 2. URL format
+    const isExec = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(state.scriptUrl);
+    const isDev  = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/dev$/.test(state.scriptUrl);
+    if (isDev) {
+      diagLog(rows, false, 'URL uses /dev (test mode)',
+        'The /dev URL only works while signed in. Re-deploy and copy the /exec URL.');
+    } else if (!isExec) {
+      diagLog(rows, false, 'URL format looks wrong',
+        'Expected: https://script.google.com/macros/s/AKfy…/exec');
+    } else {
+      diagLog(rows, true, 'URL format is valid', 'Ends in /exec — good.');
+    }
+
+    // 3. Ping
+    let pingMs = 0;
+    try {
+      const t0  = performance.now();
+      const res = await callScript('ping');
+      pingMs = Math.round(performance.now() - t0);
+      diagLog(rows, true, 'Bridge is reachable', `Responded in ${pingMs} ms — ${res.message || 'ok'}`);
+    } catch (err) {
+      diagLog(rows, false, 'Bridge is not reachable', err.message);
+      renderDiag(rows);
+      return;
+    }
+
+    // 4. Echo (verifies payload delivery)
+    try {
+      const res = await callScript('echo', { hello: 'world', t: Date.now() });
+      const ok  = res.echoed && res.echoed.hello === 'world';
+      diagLog(rows, ok, 'Payload round-trip',
+        ok ? 'Bridge received and echoed the payload correctly.'
+           : 'Bridge replied but did not echo the payload.');
+    } catch (err) {
+      diagLog(rows, false, 'Payload round-trip failed', err.message);
+    }
+
+    // 5. Drive read
+    try {
+      const res = await callScript('load');
+      if (res.found) {
+        const n = res.data && res.data.locations ? res.data.locations.length : 0;
+        diagLog(rows, true, 'Drive read works',
+          `Found “${CONFIG.FILE}” with ${n} location(s) — ${res.data && res.data.updatedAt || 'unknown date'}`);
+      } else {
+        diagLog(rows, 'warn', 'Drive read works',
+          'Bridge is fine but no file exists yet. Press “Sync to Drive” to create it.');
+      }
+    } catch (err) {
+      diagLog(rows, false, 'Drive read failed',
+        err.message + ' — this usually means the Apps Script has not been authorized yet.');
+    }
+
+    // 6. If we have local data, warn about URL-encoded size
+    if (state.locations.length > 0) {
+      const approxBytes = JSON.stringify(state.locations).length * 1.5;
+      if (approxBytes > 400000) {
+        diagLog(rows, 'warn', 'Payload size',
+          `~${Math.round(approxBytes/1024)} KB — this may exceed Apps Script’s form-encoded POST limit ` +
+          `(~1 MB). Consider syncing in smaller batches.`);
+      } else {
+        diagLog(rows, true, 'Payload size', `~${Math.round(approxBytes/1024)} KB — within limits.`);
+      }
+    }
+
+    const failed = rows.filter(r => r.pass === false).length;
+    toast(failed ? `${failed} check(s) failed — see results below` : '✅ All checks passed');
+  } catch (err) {
+    diagLog(rows, false, 'Unexpected error', String(err));
+    renderDiag(rows);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '▶ Run Diagnostics';
+    renderDiag(rows);
+  }
+}
+
+$('#btnDiagnose').addEventListener('click', runDiagnostics);
 
 /* =====================================================================
    DRIVE PUSH / PULL
@@ -1004,9 +1173,11 @@ async function pushToDrive(silent = false) {
     state.dirty   = false;
     state.lastSync = new Date().toISOString();
     localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
+    setLastError(null);
     if (!silent) toast(`Synced ${res.count ?? state.locations.length} location(s) to Drive`);
   } catch (err) {
     console.error(err);
+    setLastError(err.message);
     if (!silent) toast('Sync failed: ' + err.message);
   } finally {
     state.busy = false;
@@ -1022,13 +1193,13 @@ async function pullFromDrive() {
 
   try {
     const res = await callScript('load');
-    if (!res.found) { toast('No saved file found in “Saved address”'); return; }
+    if (!res.found) { toast('No saved file found in “Saved address”'); setLastError(null); return; }
 
     const data   = res.data || {};
     const remote = Array.isArray(data.locations) ? data.locations
                  : Array.isArray(data)            ? data : [];
 
-    if (!remote.length) { toast('Drive file contains no locations'); return; }
+    if (!remote.length) { toast('Drive file contains no locations'); setLastError(null); return; }
 
     const byId = new Map(state.locations.map(l => [l.id, l]));
     let added = 0, updated = 0;
@@ -1054,12 +1225,14 @@ async function pullFromDrive() {
     state.dirty    = false;
     state.lastSync = new Date().toISOString();
     localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
+    setLastError(null);
     saveLocal();
     render();
     refreshMarkers();
     toast(`Import complete — ${added} new, ${updated} updated`);
   } catch (err) {
     console.error(err);
+    setLastError(err.message);
     toast('Import failed: ' + err.message);
   } finally {
     state.busy = false;
@@ -1102,6 +1275,7 @@ $('#btnDisconnect').addEventListener('click', () => {
   if (!confirm('Clear the saved Apps Script URL?')) return;
   state.scriptUrl = '';
   localStorage.removeItem(CONFIG.LS_URL);
+  setLastError(null);
   updateStatus();
   toast('Script URL cleared');
 });
@@ -1120,6 +1294,10 @@ window.addEventListener('load', () => {
   initMap();
   render();
   updateStatus();
+
+  if (state.lastError) {
+    setLastError(state.lastError);   // re-display persisted error
+  }
 
   window.addEventListener('beforeunload', e => {
     if (state.dirty && state.scriptUrl) { e.preventDefault(); e.returnValue = ''; }
