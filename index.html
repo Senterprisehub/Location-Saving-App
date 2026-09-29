@@ -183,7 +183,45 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .callout.danger .body b{color:var(--danger)}
 
 .step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:var(--primary);color:#fff;font-size:11px;font-weight:800;margin-right:8px;letter-spacing:-.02em}
-.panel h3.with-badge{display:flex;align-items:center}
+
+/* ============ COLLAPSIBLE PANEL ============ */
+.collapsible-panel{padding:0;border-bottom:1px solid var(--border)}
+.collapsible-panel:last-child{border-bottom:none}
+.collapsible-header{
+  display:flex;align-items:center;gap:10px;
+  padding:18px 20px;
+  cursor:pointer;user-select:none;
+  background:transparent;
+  transition:background .15s;
+  list-style:none;
+}
+.collapsible-header:hover{background:var(--bg-hover)}
+.collapsible-header .title{
+  flex:1;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-sub);font-weight:700;
+  display:flex;align-items:center;
+}
+.collapsible-header .chev{
+  flex:none;
+  width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  background:var(--bg-panel-2);
+  border:1px solid var(--border);
+  color:var(--primary);
+  font-size:11px;
+  transition:transform .3s var(--ease-out),background .15s,border-color .15s;
+}
+.collapsible-header:hover .chev{background:var(--primary-soft);border-color:var(--primary)}
+.collapsible-panel.open .collapsible-header .chev{transform:rotate(180deg)}
+.collapsible-body{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .5s var(--ease-out);
+}
+.collapsible-panel.open .collapsible-body{max-height:3000px;overflow:visible}
+.collapsible-body-inner{padding:0 20px 20px}
 
 .diag-results{margin-top:12px;display:none}
 .diag-results.show{display:block;animation:fadeUp .3s var(--ease-out)}
@@ -258,8 +296,9 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <div class="hint">Stored locally and embedded in the Drive JSON for reference.</div>
     </div>
 
+    <!-- ============ STEP 1 ============ -->
     <div class="panel">
-      <h3 class="with-badge"><span class="step-badge">1</span> Copy the Apps Script Code</h3>
+      <h3 class="with-badge" style="display:flex;align-items:center;"><span class="step-badge">1</span> Copy the Apps Script Code</h3>
 
       <div class="code-section">
         <div class="code-header">
@@ -288,134 +327,148 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       </div>
     </div>
 
-    <div class="panel">
-      <h3 class="with-badge"><span class="step-badge">2</span> Deploy &amp; Get the Web App URL</h3>
-
-      <div class="stepper">
-
-        <div class="step">
-          <div class="step-title">Open Google Apps Script</div>
-          <div class="step-desc">
-            Go to <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a>
-            and sign in.
-          </div>
-          <div class="step-cta">
-            <button class="ghost" onclick="window.open('https://script.google.com/home/projects/create','_blank','noopener')">
-              🚀 Open Apps Script ↗
-            </button>
-          </div>
+    <!-- ============ STEP 2 — COLLAPSIBLE ============ -->
+    <div class="collapsible-panel" id="deployPanel">
+      <div class="collapsible-header" id="deployHeader">
+        <div class="title">
+          <span class="step-badge">2</span>
+          Deploy &amp; Get the Web App URL
         </div>
+        <span class="chev">▼</span>
+      </div>
 
-        <div class="step">
-          <div class="step-title">Create a new project</div>
-          <div class="step-desc">Click <code>+ New project</code> on the top-left.</div>
-        </div>
+      <div class="collapsible-body">
+        <div class="collapsible-body-inner">
 
-        <div class="step">
-          <div class="step-title">Paste the code</div>
-          <div class="step-desc">
-            Select everything (Ctrl/⌘ + A), delete, then paste the code from <b>Step 1</b>.
-          </div>
-        </div>
+          <div class="stepper">
 
-        <div class="step">
-          <div class="step-title">Save the project</div>
-          <div class="step-desc">Press <code>Ctrl + S</code> / <code>⌘ + S</code>.</div>
-        </div>
-
-        <div class="step">
-          <div class="step-title">Start a new deployment</div>
-          <div class="step-desc">
-            Click the blue <b>Deploy</b> button (top-right) → <b>New deployment</b>.
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-title">Choose "Web app" as the type</div>
-          <div class="step-desc">
-            Click the <b>⚙ gear icon</b> next to "Select type" → <b>Web app</b>.
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-title">Set permissions</div>
-          <div class="step-desc">
-            <br>• <b>Execute as:</b> <code>Me (your@gmail.com)</code>
-            <br>• <b>Who has access:</b> <code>Anyone</code>
-          </div>
-
-          <div class="callout warn">
-            <span class="ico">⚠️</span>
-            <div class="body">
-              <b>Critical</b>
-              "Who has access" must be <b>Anyone</b>. If it's set to "Only myself", the browser
-              receives an HTML login page and JSON parsing fails.
+            <div class="step">
+              <div class="step-title">Open Google Apps Script</div>
+              <div class="step-desc">
+                Go to <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a>
+                and sign in.
+              </div>
+              <div class="step-cta">
+                <button class="ghost" onclick="window.open('https://script.google.com/home/projects/create','_blank','noopener')">
+                  🚀 Open Apps Script ↗
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="step">
-          <div class="step-title">Authorize the script</div>
-          <div class="step-desc">
-            Click <b>Deploy</b>. Google will ask for permission:
-            <br>1. <b>Authorize access</b>
-            <br>2. Choose your Google account
-            <br>3. Click <b>Advanced</b> → <b>Go to [project] (unsafe)</b>
-            <br>4. Click <b>Allow</b>
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-title">Copy the Web App URL</div>
-          <div class="step-desc">
-            Copy the URL from the deployment dialog. It looks like:
-            <br><code>https://script.google.com/macros/s/AKfy…/exec</code>
-          </div>
-
-          <div class="callout info">
-            <span class="ico">ℹ️</span>
-            <div class="body">
-              <b>Use the /exec URL</b>
-              Never use <code>/dev</code> — it only works while you're signed in.
+            <div class="step">
+              <div class="step-title">Create a new project</div>
+              <div class="step-desc">Click <code>+ New project</code> on the top-left.</div>
             </div>
-          </div>
-        </div>
 
-        <div class="step">
-          <div class="step-title">⚠ Verify the deployment works</div>
-          <div class="step-desc">
-            Before pasting the URL below, <b>open it in a new browser tab</b> and add
-            <code>?action=ping</code> to the end.
-          </div>
-          <div class="step-desc" style="margin-top:6px;">
-            You must see exactly:
-            <br><code>{"ok":true,"message":"Connected to Drive bridge","version":2}</code>
-          </div>
-
-          <div class="callout danger">
-            <span class="ico">🚨</span>
-            <div class="body">
-              <b>If you see anything else</b>
-              Plain text, HTML, a login page, or an error means the deployment is wrong.
-              Common fixes: set "Who has access" to <b>Anyone</b>, or re-deploy with a
-              <b>New version</b> if you edited the code.
+            <div class="step">
+              <div class="step-title">Paste the code</div>
+              <div class="step-desc">
+                Select everything (Ctrl/⌘ + A), delete, then paste the code from <b>Step 1</b>.
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="step">
-          <div class="step-title">⚠ Re-deploy after every code change</div>
-          <div class="step-desc">
-            If you edit <code>Code.gs</code>, existing deployments keep running the old code.
-            You must go to <b>Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy</b>.
-          </div>
-        </div>
+            <div class="step">
+              <div class="step-title">Save the project</div>
+              <div class="step-desc">Press <code>Ctrl + S</code> / <code>⌘ + S</code>.</div>
+            </div>
 
+            <div class="step">
+              <div class="step-title">Start a new deployment</div>
+              <div class="step-desc">
+                Click the blue <b>Deploy</b> button (top-right) → <b>New deployment</b>.
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-title">Choose "Web app" as the type</div>
+              <div class="step-desc">
+                Click the <b>⚙ gear icon</b> next to "Select type" → <b>Web app</b>.
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-title">Set permissions</div>
+              <div class="step-desc">
+                <br>• <b>Execute as:</b> <code>Me (your@gmail.com)</code>
+                <br>• <b>Who has access:</b> <code>Anyone</code>
+              </div>
+
+              <div class="callout warn">
+                <span class="ico">⚠️</span>
+                <div class="body">
+                  <b>Critical</b>
+                  "Who has access" must be <b>Anyone</b>. If it's set to "Only myself", the browser
+                  receives an HTML login page and JSON parsing fails.
+                </div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-title">Authorize the script</div>
+              <div class="step-desc">
+                Click <b>Deploy</b>. Google will ask for permission:
+                <br>1. <b>Authorize access</b>
+                <br>2. Choose your Google account
+                <br>3. Click <b>Advanced</b> → <b>Go to [project] (unsafe)</b>
+                <br>4. Click <b>Allow</b>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-title">Copy the Web App URL</div>
+              <div class="step-desc">
+                Copy the URL from the deployment dialog. It looks like:
+                <br><code>https://script.google.com/macros/s/AKfy…/exec</code>
+              </div>
+
+              <div class="callout info">
+                <span class="ico">ℹ️</span>
+                <div class="body">
+                  <b>Use the /exec URL</b>
+                  Never use <code>/dev</code> — it only works while you're signed in.
+                </div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-title">⚠ Verify the deployment works</div>
+              <div class="step-desc">
+                Before pasting the URL below, <b>open it in a new browser tab</b> and add
+                <code>?action=ping</code> to the end.
+              </div>
+              <div class="step-desc" style="margin-top:6px;">
+                You must see exactly:
+                <br><code>{"ok":true,"message":"Connected to Drive bridge","version":3}</code>
+              </div>
+
+              <div class="callout danger">
+                <span class="ico">🚨</span>
+                <div class="body">
+                  <b>If you see anything else</b>
+                  Plain text, HTML, a login page, or an error means the deployment is wrong.
+                  Common fixes: set "Who has access" to <b>Anyone</b>, or re-deploy with a
+                  <b>New version</b> if you edited the code.
+                </div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-title">⚠ Re-deploy after every code change</div>
+              <div class="step-desc">
+                If you edit <code>Code.gs</code>, existing deployments keep running the old code.
+                You must go to <b>Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy</b>.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
       </div>
     </div>
 
+    <!-- ============ STEP 3 ============ -->
     <div class="panel">
-      <h3 class="with-badge"><span class="step-badge">3</span> Paste the Bridge URL</h3>
+      <h3 class="with-badge" style="display:flex;align-items:center;"><span class="step-badge">3</span> Paste the Bridge URL</h3>
       <input type="url" id="scriptUrlInput"
              placeholder="https://script.google.com/macros/s/…/exec" />
       <button id="btnSaveScript" class="secondary block">Save Script URL</button>
@@ -478,10 +531,14 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 
 <script type="text/plain" id="appsScriptSource">
 /* ============================================================
-   Location Tracker — Drive Bridge (v3)
+   Location Tracker — Drive Bridge (v3.1)
    Deploy as Web App:
      Execute as      : Me
      Who has access  : Anyone
+
+   Fix log:
+     v3.1 — replaced MimeType.JSON (does not exist in Apps Script)
+             with the string 'application/json'
    ============================================================ */
 const FOLDER_NAME = 'Saved address';
 const FILE_NAME   = 'saved_address.json';
@@ -494,14 +551,12 @@ function handle(e) {
     var action = null;
     var body   = {};
 
-    // 1. Form-encoded body (preferred — arrives via e.parameter)
     if (e && e.parameter && e.parameter.action) {
       action = e.parameter.action;
       if (e.parameter.payload) {
         try { body = JSON.parse(e.parameter.payload); } catch (_) { body = {}; }
       }
     }
-    // 2. JSON body fallback
     else if (e && e.postData && e.postData.contents) {
       try {
         var parsed = JSON.parse(e.postData.contents);
@@ -538,7 +593,7 @@ function saveData(payload) {
   if (existing.hasNext()) {
     existing.next().setContent(content);
   } else {
-    folder.createFile(FILE_NAME, content, MimeType.JSON);
+    folder.createFile(FILE_NAME, content, 'application/json');
   }
   return {
     ok: true,
@@ -573,7 +628,8 @@ const CONFIG = {
   LS_AUTO  : 'mlt_autosync',
   LS_SYNC  : 'mlt_last_sync',
   LS_URL   : 'mlt_script_url',
-  LS_ERR   : 'mlt_last_error'
+  LS_ERR   : 'mlt_last_error',
+  LS_DEPLOY_OPEN : 'mlt_deploy_open'
 };
 
 const state = {
@@ -688,6 +744,23 @@ document.getElementById('codeToggle').addEventListener('click', (e) => {
   const open   = body.classList.toggle('open');
   toggle.classList.toggle('open', open);
 });
+
+/* =====================================================================
+   COLLAPSIBLE STEP 2
+   ===================================================================== */
+function initDeployCollapsible() {
+  const panel  = $('#deployPanel');
+  const header = $('#deployHeader');
+
+  // Restore saved open/closed state (default: collapsed)
+  const saved = localStorage.getItem(CONFIG.LS_DEPLOY_OPEN);
+  if (saved === 'true') panel.classList.add('open');
+
+  header.addEventListener('click', () => {
+    const isOpen = panel.classList.toggle('open');
+    localStorage.setItem(CONFIG.LS_DEPLOY_OPEN, String(isOpen));
+  });
+}
 
 /* =====================================================================
    LOCAL STORAGE
@@ -977,7 +1050,7 @@ $('#autoSync').addEventListener('change', e => {
 });
 
 /* =====================================================================
-   APPS SCRIPT BRIDGE — captures raw response for debugging
+   APPS SCRIPT BRIDGE
    ===================================================================== */
 async function callScript(action, payload) {
   if (!state.scriptUrl) throw new Error('Script URL not configured');
@@ -1006,7 +1079,6 @@ async function callScript(action, payload) {
     throw err;
   }
 
-  // Detect common non-JSON responses
   const trimmed = text.trim();
   const looksLikeHtml   = /^<!DOCTYPE|^<html/i.test(trimmed);
   const looksLikeLogin  = /accounts\.google\.com|ServiceLogin/i.test(text);
@@ -1071,7 +1143,6 @@ async function runDiagnostics() {
   btn.textContent = '⏳ Running…';
 
   try {
-    /* 1. URL present */
     if (!state.scriptUrl) {
       diagLog(rows, false, 'Bridge URL saved', 'Go to Step 3 and paste your Web App URL.');
       renderDiag(rows);
@@ -1079,7 +1150,6 @@ async function runDiagnostics() {
     }
     diagLog(rows, true, 'Bridge URL saved', state.scriptUrl);
 
-    /* 2. URL format */
     const isExec = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(state.scriptUrl);
     const isDev  = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/dev$/.test(state.scriptUrl);
     if (isDev) {
@@ -1092,7 +1162,6 @@ async function runDiagnostics() {
       diagLog(rows, true, 'URL format is valid', 'Ends in /exec — good.');
     }
 
-    /* 3. Ping — the critical test */
     let pingData = null;
     try {
       const t0  = performance.now();
@@ -1103,7 +1172,6 @@ async function runDiagnostics() {
     } catch (err) {
       diagLog(rows, false, 'Bridge is not reachable', err.message, err.rawResponse);
 
-      // Add tailored next-step hints
       const raw = (err.rawResponse || '').trim();
       if (raw.startsWith('action=') || /^action=/i.test(raw)) {
         diagLog(rows, false, 'Root cause: stale deployment',
@@ -1115,8 +1183,7 @@ async function runDiagnostics() {
           'The Web App requires sign-in. Set "Who has access" to "Anyone" and re-deploy.');
       } else if (/<!DOCTYPE|^<html/i.test(raw)) {
         diagLog(rows, false, 'Root cause: HTML response',
-          'The bridge returned an HTML page instead of JSON. This usually means the ' +
-          '"Who has access" setting is not "Anyone".');
+          'The bridge returned an HTML page instead of JSON. Check the "Who has access" setting.');
       } else if (raw.length === 0) {
         diagLog(rows, false, 'Root cause: empty response',
           'The bridge returned nothing. Check that your deployment is live and the URL is correct.');
@@ -1126,7 +1193,6 @@ async function runDiagnostics() {
       return;
     }
 
-    /* 4. Echo (verifies payload delivery) */
     try {
       const res = await callScript('echo', { hello: 'world', t: Date.now() });
       const ok  = res.echoed && res.echoed.hello === 'world';
@@ -1137,7 +1203,6 @@ async function runDiagnostics() {
       diagLog(rows, false, 'Payload round-trip failed', err.message, err.rawResponse);
     }
 
-    /* 5. Drive read */
     try {
       const res = await callScript('load');
       if (res.found) {
@@ -1154,7 +1219,6 @@ async function runDiagnostics() {
         err.rawResponse);
     }
 
-    /* 6. Payload size check */
     if (state.locations.length > 0) {
       const approxBytes = JSON.stringify(state.locations).length * 1.5;
       if (approxBytes > 400000) {
@@ -1314,6 +1378,7 @@ $('#btnDisconnect').addEventListener('click', () => {
 window.addEventListener('load', () => {
   loadAppsScriptPreset();
   loadLocal();
+  initDeployCollapsible();
 
   $('#gmailInput').value     = state.gmail;
   $('#scriptUrlInput').value = state.scriptUrl;
