@@ -13,7 +13,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
-/* ==================== DESIGN TOKENS ==================== */
 :root {
   --bg-app:#eef1f7; --bg-panel:#fff; --bg-panel-2:#f7f9fc; --bg-glass:rgba(255,255,255,.72); --bg-hover:#f0f4fa;
   --border:#e4e9f2; --border-strong:#d3dbe8;
@@ -22,7 +21,7 @@
   --success:#10b981; --success-soft:#d1fae5; --warning:#f59e0b; --warning-soft:#fef3c7;
   --danger:#ef4444; --danger-soft:#fee2e2;
   --code-bg:#0f172a; --code-text:#e2e8f0; --code-accent:#7dd3fc;
-  --radius-sm:8px; --radius:14px; --radius-lg:20px; --radius-xl:28px;
+  --radius-sm:8px; --radius:14px; --radius-xl:28px;
   --shadow-xs:0 1px 2px rgba(15,23,42,.04);
   --shadow-sm:0 2px 8px rgba(15,23,42,.06);
   --shadow:0 8px 24px -6px rgba(15,23,42,.10),0 2px 6px rgba(15,23,42,.04);
@@ -45,7 +44,6 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden;background:var(--bg-app);color:var(--text);-webkit-font-smoothing:antialiased}
-
 #map{flex:1;height:100%;background:var(--bg-panel-2)}
 .leaflet-container{font-family:inherit}
 .leaflet-popup-content-wrapper{border-radius:var(--radius)!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border)!important;background:var(--bg-panel)!important;color:var(--text)!important}
@@ -57,7 +55,6 @@ body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow
 .leaflet-control-attribution{background:var(--bg-glass)!important;backdrop-filter:blur(8px);color:var(--text-sub)!important;border-radius:var(--radius-sm) 0 0 0!important;font-size:10px!important}
 
 #sidebar{width:380px;min-width:380px;height:100%;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:-8px 0 30px -20px rgba(15,23,42,.25);z-index:1000;position:relative}
-
 #statusBar{padding:12px 20px;font-size:12px;font-weight:500;color:var(--text-muted);background:var(--bg-panel-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex:none}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--text-sub);flex:none;transition:background .3s}
 .dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-soft)}
@@ -81,7 +78,6 @@ body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;overflow
 .panel{padding:18px 20px;border-bottom:1px solid var(--border)}
 .panel:last-child{border-bottom:none}
 .panel h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;font-weight:700}
-.panel h4{font-size:12px;font-weight:700;color:var(--text);margin:16px 0 10px;letter-spacing:-.01em}
 
 button{font-family:inherit;padding:11px 16px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:-.01em;transition:transform .15s,box-shadow .2s,opacity .15s,background .2s;box-shadow:var(--shadow-glow);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
 button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 26px -8px var(--primary-glow),0 4px 10px -2px var(--primary-glow)}
@@ -189,7 +185,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:var(--primary);color:#fff;font-size:11px;font-weight:800;margin-right:8px;letter-spacing:-.02em}
 .panel h3.with-badge{display:flex;align-items:center}
 
-/* ============ DIAGNOSTICS ============ */
 .diag-results{margin-top:12px;display:none}
 .diag-results.show{display:block;animation:fadeUp .3s var(--ease-out)}
 .diag-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;font-size:12px;border-radius:var(--radius-sm);margin-bottom:6px;background:var(--bg-panel-2);border:1px solid var(--border);line-height:1.5}
@@ -198,11 +193,11 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 .diag-row .text{flex:1;min-width:0}
 .diag-row .label{font-weight:600;color:var(--text)}
 .diag-row .detail{color:var(--text-muted);font-size:11px;margin-top:3px;word-break:break-word;font-family:'JetBrains Mono',monospace;line-height:1.5}
+.diag-row .raw{margin-top:6px;padding:8px 10px;background:var(--code-bg);color:#e2e8f0;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.5;overflow-x:auto;max-height:140px;white-space:pre-wrap;word-break:break-all}
 .diag-row.pass{border-left:3px solid var(--success)}
 .diag-row.fail{border-left:3px solid var(--danger);background:var(--danger-soft)}
 .diag-row.warn{border-left:3px solid var(--warning);background:var(--warning-soft)}
 
-/* ============ TOAST ============ */
 #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(24px) scale(.96);background:var(--text);color:var(--bg-panel);padding:13px 22px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .28s var(--ease-out),transform .35s var(--ease-out);z-index:9999;max-width:80vw;box-shadow:var(--shadow-lg)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 @media (prefers-color-scheme: dark){#toast{background:var(--bg-panel);color:var(--text);border:1px solid var(--border-strong)}}
@@ -241,7 +236,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
     </button>
   </div>
 
-  <!-- ============ TAB: LOCATIONS ============ -->
   <section id="tab-locations" class="tab-panel active">
     <div class="panel">
       <h3>Current Location</h3>
@@ -255,7 +249,6 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
     <div id="locationList"></div>
   </section>
 
-  <!-- ============ TAB: SETTINGS ============ -->
   <section id="tab-settings" class="tab-panel">
 
     <div class="panel">
@@ -291,8 +284,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       </div>
 
       <div class="hint">
-        This script acts as a bridge between the app and your Google Drive.
-        It runs entirely inside your Google account.
+        Copy this exact code. Do not modify it.
       </div>
     </div>
 
@@ -305,7 +297,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           <div class="step-title">Open Google Apps Script</div>
           <div class="step-desc">
             Go to <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a>
-            in a new tab and sign in with the Google account you want your data stored in.
+            and sign in.
           </div>
           <div class="step-cta">
             <button class="ghost" onclick="window.open('https://script.google.com/home/projects/create','_blank','noopener')">
@@ -328,9 +320,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 
         <div class="step">
           <div class="step-title">Save the project</div>
-          <div class="step-desc">
-            Press <code>Ctrl + S</code> / <code>⌘ + S</code>.
-          </div>
+          <div class="step-desc">Press <code>Ctrl + S</code> / <code>⌘ + S</code>.</div>
         </div>
 
         <div class="step">
@@ -357,9 +347,9 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
           <div class="callout warn">
             <span class="ico">⚠️</span>
             <div class="body">
-              <b>Important</b>
-              "Who has access" must be <b>Anyone</b> — otherwise the browser cannot reach
-              your Web App and sync will fail.
+              <b>Critical</b>
+              "Who has access" must be <b>Anyone</b>. If it's set to "Only myself", the browser
+              receives an HTML login page and JSON parsing fails.
             </div>
           </div>
         </div>
@@ -386,28 +376,41 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
             <span class="ico">ℹ️</span>
             <div class="body">
               <b>Use the /exec URL</b>
-              Never use the <code>/dev</code> test URL — it only works while you are logged in
-              and will block sync for everyone else.
+              Never use <code>/dev</code> — it only works while you're signed in.
             </div>
           </div>
         </div>
 
         <div class="step">
-          <div class="step-title">⚠ After editing code, re-deploy</div>
+          <div class="step-title">⚠ Verify the deployment works</div>
           <div class="step-desc">
-            If you ever change <code>Code.gs</code>, existing deployments keep the old code.
-            Go to <b>Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy</b>.
+            Before pasting the URL below, <b>open it in a new browser tab</b> and add
+            <code>?action=ping</code> to the end.
+          </div>
+          <div class="step-desc" style="margin-top:6px;">
+            You must see exactly:
+            <br><code>{"ok":true,"message":"Connected to Drive bridge","version":2}</code>
+          </div>
+
+          <div class="callout danger">
+            <span class="ico">🚨</span>
+            <div class="body">
+              <b>If you see anything else</b>
+              Plain text, HTML, a login page, or an error means the deployment is wrong.
+              Common fixes: set "Who has access" to <b>Anyone</b>, or re-deploy with a
+              <b>New version</b> if you edited the code.
+            </div>
           </div>
         </div>
 
-      </div>
-
-      <div class="callout success" style="margin-top:16px;">
-        <span class="ico">✅</span>
-        <div class="body">
-          <b>Almost done</b>
-          Paste the URL into <b>Step 3</b> below and click <b>Save Script URL</b>.
+        <div class="step">
+          <div class="step-title">⚠ Re-deploy after every code change</div>
+          <div class="step-desc">
+            If you edit <code>Code.gs</code>, existing deployments keep running the old code.
+            You must go to <b>Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy</b>.
+          </div>
         </div>
+
       </div>
     </div>
 
@@ -416,6 +419,7 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <input type="url" id="scriptUrlInput"
              placeholder="https://script.google.com/macros/s/…/exec" />
       <button id="btnSaveScript" class="secondary block">Save Script URL</button>
+      <button id="btnOpenInBrowser" class="ghost block">🌐 Test URL in Browser</button>
 
       <label class="checkrow">
         <input type="checkbox" id="autoSync" checked />
@@ -429,13 +433,12 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <button id="btnDisconnect" class="ghost block">🔓 Clear Script URL</button>
     </div>
 
-    <!-- ============ DIAGNOSTICS ============ -->
     <div class="panel">
       <h3>🔍 Diagnostics</h3>
       <button id="btnDiagnose" class="block">▶ Run Diagnostics</button>
       <div class="hint" style="margin-top:8px;">
-        Checks URL format, bridge reachability, and Drive read access step-by-step.
-        Use this first if sync is failing.
+        Shows the raw response from the bridge when something fails — so you can
+        see exactly what your deployment is returning.
       </div>
       <div class="diag-results" id="diagResults"></div>
     </div>
@@ -473,12 +476,9 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 
 <div id="toast"></div>
 
-<!-- =====================================================================
-     Apps Script preset — updated to read from e.parameter
-     ===================================================================== -->
 <script type="text/plain" id="appsScriptSource">
 /* ============================================================
-   Location Tracker — Drive Bridge (v2)
+   Location Tracker — Drive Bridge (v3)
    Deploy as Web App:
      Execute as      : Me
      Who has access  : Anyone
@@ -504,7 +504,7 @@ function handle(e) {
     // 2. JSON body fallback
     else if (e && e.postData && e.postData.contents) {
       try {
-        const parsed = JSON.parse(e.postData.contents);
+        var parsed = JSON.parse(e.postData.contents);
         action = parsed.action;
         body   = parsed.payload || {};
       } catch (_) {}
@@ -512,7 +512,7 @@ function handle(e) {
 
     var result;
     switch (action) {
-      case 'ping': result = { ok: true, message: 'Connected to Drive bridge', version: 2 }; break;
+      case 'ping': result = { ok: true, message: 'Connected to Drive bridge', version: 3 }; break;
       case 'echo': result = { ok: true, echoed: body };                                     break;
       case 'save': result = saveData(body);                                                 break;
       case 'load': result = loadData();                                                     break;
@@ -564,9 +564,6 @@ function getOrCreateFolder() {
 }
 </script>
 
-<!-- =====================================================================
-     MAIN APP SCRIPT
-     ===================================================================== -->
 <script>
 const CONFIG = {
   FOLDER   : 'Saved address',
@@ -637,9 +634,6 @@ function setLastError(msg) {
   }
 }
 
-/* =====================================================================
-   GOOGLE MAPS HELPERS
-   ===================================================================== */
 function directionsUrl(loc) {
   return 'https://www.google.com/maps/dir/?api=1'
        + '&destination=' + encodeURIComponent(loc.lat + ',' + loc.lng)
@@ -676,7 +670,6 @@ document.getElementById('btnCopyAppsScript').addEventListener('click', async (e)
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-
     btn.classList.add('copied');
     btn.textContent = '✅ Copied!';
     toast('Apps Script code copied to clipboard');
@@ -723,13 +716,11 @@ let map;
 
 function initMap() {
   map = L.map('map', { zoomControl: true }).setView([20, 78], 4);
-
   L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 21,
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
     attribution: 'Map tiles © Google'
   }).addTo(map);
-
   refreshMarkers();
 }
 
@@ -837,9 +828,6 @@ $('#locationList').addEventListener('click', e => {
   }
 });
 
-/* =====================================================================
-   COMMIT
-   ===================================================================== */
 function commit(message) {
   saveLocal();
   render();
@@ -858,9 +846,6 @@ function scheduleAutoPush() {
   }, 1200);
 }
 
-/* =====================================================================
-   STATUS
-   ===================================================================== */
 function updateStatus() {
   const dot = $('#statusDot');
   const txt = $('#statusText');
@@ -883,9 +868,6 @@ function updateStatus() {
   if (ls) ls.textContent = fmtTime(state.lastSync);
 }
 
-/* =====================================================================
-   TABS
-   ===================================================================== */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -951,7 +933,7 @@ $('#btnSaveCurrent').addEventListener('click', () => {
 });
 
 /* =====================================================================
-   SETTINGS ACTIONS
+   SETTINGS
    ===================================================================== */
 $('#btnSaveGmail').addEventListener('click', () => {
   const v = $('#gmailInput').value.trim();
@@ -966,9 +948,7 @@ $('#btnSaveGmail').addEventListener('click', () => {
 });
 
 $('#btnSaveScript').addEventListener('click', () => {
-  let v = $('#scriptUrlInput').value.trim();
-  // Be forgiving: strip surrounding whitespace and any accidental quotes
-  v = v.replace(/^["']|["']$/g, '');
+  let v = $('#scriptUrlInput').value.trim().replace(/^["']|["']$/g, '');
   if (!v) return toast('Please paste your Apps Script Web App URL');
   if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/(exec|dev)/.test(v))
     return toast('URL should look like …/macros/s/…/exec');
@@ -982,6 +962,13 @@ $('#btnSaveScript').addEventListener('click', () => {
   toast('Script URL saved');
 });
 
+$('#btnOpenInBrowser').addEventListener('click', () => {
+  if (!state.scriptUrl) return toast('Save a Script URL first');
+  const testUrl = state.scriptUrl + '?action=ping';
+  window.open(testUrl, '_blank', 'noopener');
+  toast('Opened in new tab — you should see JSON with ok:true');
+});
+
 $('#autoSync').addEventListener('change', e => {
   state.autoSync = e.target.checked;
   localStorage.setItem(CONFIG.LS_AUTO, String(state.autoSync));
@@ -990,64 +977,87 @@ $('#autoSync').addEventListener('change', e => {
 });
 
 /* =====================================================================
-   APPS SCRIPT BRIDGE — URL-ENCODED, NO PREFLIGHT
+   APPS SCRIPT BRIDGE — captures raw response for debugging
    ===================================================================== */
 async function callScript(action, payload) {
   if (!state.scriptUrl) throw new Error('Script URL not configured');
 
-  // URLSearchParams → Content-Type: application/x-www-form-urlencoded
-  // This is a "simple request" — no CORS preflight, no JSON body.
   const params = new URLSearchParams();
   params.append('action', action);
-  if (payload !== undefined) {
-    params.append('payload', JSON.stringify(payload));
-  }
+  if (payload !== undefined) params.append('payload', JSON.stringify(payload));
 
   const t0  = performance.now();
-  const res = await fetch(state.scriptUrl, {
-    method : 'POST',
-    body   : params
-  });
-  const ms  = Math.round(performance.now() - t0);
-  const text = await res.text();
+  let res, text;
+
+  try {
+    res = await fetch(state.scriptUrl, { method: 'POST', body: params });
+    text = await res.text();
+  } catch (netErr) {
+    const err = new Error('Network error — check your internet connection');
+    err.rawResponse = String(netErr);
+    throw err;
+  }
+
+  const ms = Math.round(performance.now() - t0);
 
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status} (${ms} ms) — ${text.slice(0, 200)}`);
+    const err = new Error(`HTTP ${res.status} after ${ms} ms`);
+    err.rawResponse = text;
+    throw err;
   }
+
+  // Detect common non-JSON responses
+  const trimmed = text.trim();
+  const looksLikeHtml   = /^<!DOCTYPE|^<html/i.test(trimmed);
+  const looksLikeLogin  = /accounts\.google\.com|ServiceLogin/i.test(text);
+  const looksLikeText   = !trimmed.startsWith('{') && !trimmed.startsWith('[');
 
   let data;
   try {
     data = JSON.parse(text);
-  } catch (e) {
-    // Almost always means the Web App returned an HTML login page
-    const isHtml = /<!DOCTYPE|<html/i.test(text);
-    const hint = isHtml
-      ? ' (Got HTML instead of JSON — check “Who has access” is set to Anyone and re-deploy.)'
-      : '';
-    throw new Error('Invalid response from bridge' + hint);
+  } catch (parseErr) {
+    let hint = 'Invalid response from bridge';
+    if (looksLikeHtml || looksLikeLogin) {
+      hint = 'Bridge returned HTML/login page — set "Who has access" to "Anyone" and re-deploy';
+    } else if (looksLikeText) {
+      hint = 'Bridge returned plain text, not JSON — the deployed script is stale or wrong';
+    }
+    const err = new Error(hint);
+    err.rawResponse = text;
+    err.hint = hint;
+    throw err;
   }
 
-  if (data.ok === false) throw new Error(data.error || 'Script error');
+  if (data.ok === false) {
+    const err = new Error(data.error || 'Script error');
+    err.rawResponse = text;
+    throw err;
+  }
+
   return data;
 }
 
 /* =====================================================================
    DIAGNOSTICS
    ===================================================================== */
-function diagLog(rows, pass, label, detail) {
-  rows.push({ pass, label, detail: detail || '' });
+function diagLog(rows, pass, label, detail, raw) {
+  rows.push({ pass, label, detail: detail || '', raw: raw || null });
 }
 
 function renderDiag(rows) {
   const el = $('#diagResults');
   el.innerHTML = rows.map(r => {
-    const cls   = r.pass === true ? 'pass' : r.pass === 'warn' ? 'warn' : 'fail';
-    const icon  = r.pass === true ? '✅' : r.pass === 'warn' ? '⚠️' : '❌';
+    const cls  = r.pass === true ? 'pass' : r.pass === 'warn' ? 'warn' : 'fail';
+    const icon = r.pass === true ? '✅' : r.pass === 'warn' ? '⚠️' : '❌';
+    const rawHtml = r.raw
+      ? `<div class="raw">${esc(r.raw.slice(0, 600))}${r.raw.length > 600 ? '\n… (truncated)' : ''}</div>`
+      : '';
     return `<div class="diag-row ${cls}">
       <span class="icon">${icon}</span>
       <div class="text">
         <div class="label">${esc(r.label)}</div>
         ${r.detail ? `<div class="detail">${esc(r.detail)}</div>` : ''}
+        ${rawHtml}
       </div>
     </div>`;
   }).join('');
@@ -1061,7 +1071,7 @@ async function runDiagnostics() {
   btn.textContent = '⏳ Running…';
 
   try {
-    // 1. URL present
+    /* 1. URL present */
     if (!state.scriptUrl) {
       diagLog(rows, false, 'Bridge URL saved', 'Go to Step 3 and paste your Web App URL.');
       renderDiag(rows);
@@ -1069,12 +1079,12 @@ async function runDiagnostics() {
     }
     diagLog(rows, true, 'Bridge URL saved', state.scriptUrl);
 
-    // 2. URL format
+    /* 2. URL format */
     const isExec = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(state.scriptUrl);
     const isDev  = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/dev$/.test(state.scriptUrl);
     if (isDev) {
       diagLog(rows, false, 'URL uses /dev (test mode)',
-        'The /dev URL only works while signed in. Re-deploy and copy the /exec URL.');
+        'The /dev URL only works while you are signed in. Copy the /exec URL from Deploy → Manage deployments.');
     } else if (!isExec) {
       diagLog(rows, false, 'URL format looks wrong',
         'Expected: https://script.google.com/macros/s/AKfy…/exec');
@@ -1082,20 +1092,41 @@ async function runDiagnostics() {
       diagLog(rows, true, 'URL format is valid', 'Ends in /exec — good.');
     }
 
-    // 3. Ping
-    let pingMs = 0;
+    /* 3. Ping — the critical test */
+    let pingData = null;
     try {
       const t0  = performance.now();
-      const res = await callScript('ping');
-      pingMs = Math.round(performance.now() - t0);
-      diagLog(rows, true, 'Bridge is reachable', `Responded in ${pingMs} ms — ${res.message || 'ok'}`);
+      pingData  = await callScript('ping');
+      const ms  = Math.round(performance.now() - t0);
+      diagLog(rows, true, 'Bridge is reachable',
+        `Responded in ${ms} ms — ${pingData.message || 'ok'}`);
     } catch (err) {
-      diagLog(rows, false, 'Bridge is not reachable', err.message);
+      diagLog(rows, false, 'Bridge is not reachable', err.message, err.rawResponse);
+
+      // Add tailored next-step hints
+      const raw = (err.rawResponse || '').trim();
+      if (raw.startsWith('action=') || /^action=/i.test(raw)) {
+        diagLog(rows, false, 'Root cause: stale deployment',
+          'The bridge echoed the form body back as plain text. The URL points at an old ' +
+          'or default Apps Script that does not contain the code from Step 1. ' +
+          'Open Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.');
+      } else if (/accounts\.google\.com|ServiceLogin/i.test(err.rawResponse || '')) {
+        diagLog(rows, false, 'Root cause: login page returned',
+          'The Web App requires sign-in. Set "Who has access" to "Anyone" and re-deploy.');
+      } else if (/<!DOCTYPE|^<html/i.test(raw)) {
+        diagLog(rows, false, 'Root cause: HTML response',
+          'The bridge returned an HTML page instead of JSON. This usually means the ' +
+          '"Who has access" setting is not "Anyone".');
+      } else if (raw.length === 0) {
+        diagLog(rows, false, 'Root cause: empty response',
+          'The bridge returned nothing. Check that your deployment is live and the URL is correct.');
+      }
+
       renderDiag(rows);
       return;
     }
 
-    // 4. Echo (verifies payload delivery)
+    /* 4. Echo (verifies payload delivery) */
     try {
       const res = await callScript('echo', { hello: 'world', t: Date.now() });
       const ok  = res.echoed && res.echoed.hello === 'world';
@@ -1103,39 +1134,39 @@ async function runDiagnostics() {
         ok ? 'Bridge received and echoed the payload correctly.'
            : 'Bridge replied but did not echo the payload.');
     } catch (err) {
-      diagLog(rows, false, 'Payload round-trip failed', err.message);
+      diagLog(rows, false, 'Payload round-trip failed', err.message, err.rawResponse);
     }
 
-    // 5. Drive read
+    /* 5. Drive read */
     try {
       const res = await callScript('load');
       if (res.found) {
         const n = res.data && res.data.locations ? res.data.locations.length : 0;
         diagLog(rows, true, 'Drive read works',
-          `Found “${CONFIG.FILE}” with ${n} location(s) — ${res.data && res.data.updatedAt || 'unknown date'}`);
+          `Found “${CONFIG.FILE}” with ${n} location(s)`);
       } else {
         diagLog(rows, 'warn', 'Drive read works',
-          'Bridge is fine but no file exists yet. Press “Sync to Drive” to create it.');
+          'No file exists yet. Press “Sync to Drive” to create it.');
       }
     } catch (err) {
       diagLog(rows, false, 'Drive read failed',
-        err.message + ' — this usually means the Apps Script has not been authorized yet.');
+        err.message + ' — usually means the Apps Script has not been authorized yet.',
+        err.rawResponse);
     }
 
-    // 6. If we have local data, warn about URL-encoded size
+    /* 6. Payload size check */
     if (state.locations.length > 0) {
       const approxBytes = JSON.stringify(state.locations).length * 1.5;
       if (approxBytes > 400000) {
         diagLog(rows, 'warn', 'Payload size',
-          `~${Math.round(approxBytes/1024)} KB — this may exceed Apps Script’s form-encoded POST limit ` +
-          `(~1 MB). Consider syncing in smaller batches.`);
+          `~${Math.round(approxBytes/1024)} KB — may exceed Apps Script’s form-encoded POST limit (~1 MB).`);
       } else {
         diagLog(rows, true, 'Payload size', `~${Math.round(approxBytes/1024)} KB — within limits.`);
       }
     }
 
     const failed = rows.filter(r => r.pass === false).length;
-    toast(failed ? `${failed} check(s) failed — see results below` : '✅ All checks passed');
+    toast(failed ? `${failed} check(s) failed` : '✅ All checks passed');
   } catch (err) {
     diagLog(rows, false, 'Unexpected error', String(err));
     renderDiag(rows);
@@ -1154,7 +1185,7 @@ $('#btnDiagnose').addEventListener('click', runDiagnostics);
 function buildPayload() {
   return {
     app       : 'MyLocationTracker',
-    version   : 2,
+    version   : 3,
     gmail     : state.gmail || null,
     updatedAt : new Date().toISOString(),
     count     : state.locations.length,
@@ -1170,7 +1201,7 @@ async function pushToDrive(silent = false) {
 
   try {
     const res = await callScript('save', buildPayload());
-    state.dirty   = false;
+    state.dirty    = false;
     state.lastSync = new Date().toISOString();
     localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
     setLastError(null);
@@ -1265,9 +1296,6 @@ $('#btnClearLocal').addEventListener('click', () => {
   toast('Local data cleared');
 });
 
-/* =====================================================================
-   BUTTONS
-   ===================================================================== */
 $('#btnSync').addEventListener('click', () => pushToDrive(false));
 $('#btnImport').addEventListener('click', () => pullFromDrive());
 
@@ -1295,9 +1323,7 @@ window.addEventListener('load', () => {
   render();
   updateStatus();
 
-  if (state.lastError) {
-    setLastError(state.lastError);   // re-display persisted error
-  }
+  if (state.lastError) setLastError(state.lastError);
 
   window.addEventListener('beforeunload', e => {
     if (state.dirty && state.scriptUrl) { e.preventDefault(); e.returnValue = ''; }
