@@ -2,216 +2,1145 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Location Saving App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Location Tracker</title>
+<!-- Leaflet CSS & JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root{--bg-app:#eef1f7;--bg-panel:#fff;--bg-panel-2:#f7f9fc;--bg-glass:rgba(255,255,255,.78);--bg-hover:#f0f4fa;--border:#e4e9f2;--border-strong:#d3dbe8;--text:#0f172a;--text-muted:#64748b;--text-sub:#94a3b8;--primary:#4f46e5;--primary-dark:#4338ca;--primary-soft:#eef2ff;--primary-glow:rgba(79,70,229,.28);--success:#10b981;--success-soft:#d1fae5;--warning:#f59e0b;--warning-soft:#fef3c7;--danger:#ef4444;--danger-soft:#fee2e2;--code-bg:#0f172a;--code-text:#e2e8f0;--code-accent:#7dd3fc;--shadow-xs:0 1px 2px rgba(15,23,42,.04);--shadow-sm:0 2px 8px rgba(15,23,42,.06);--shadow-lg:0 20px 40px -12px rgba(15,23,42,.18),0 4px 12px rgba(15,23,42,.06);--shadow-glow:0 8px 24px -6px var(--primary-glow)}
-@media (prefers-color-scheme:dark){:root{--bg-app:#0b1120;--bg-panel:#111827;--bg-panel-2:#0f172a;--bg-glass:rgba(17,24,39,.78);--bg-hover:#1e293b;--border:#1e293b;--border-strong:#334155;--text:#f1f5f9;--text-muted:#94a3b8;--text-sub:#64748b;--primary:#6366f1;--primary-dark:#818cf8;--primary-soft:rgba(99,102,241,.14);--primary-glow:rgba(99,102,241,.35);--success-soft:rgba(16,185,129,.16);--warning-soft:rgba(245,158,11,.16);--danger-soft:rgba(239,68,68,.16);--shadow-xs:0 1px 2px rgba(0,0,0,.3);--shadow-sm:0 2px 8px rgba(0,0,0,.35);--shadow-lg:0 20px 40px -12px rgba(0,0,0,.6);--code-bg:#020617;--code-text:#e2e8f0}}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden}
-body{font-family:'Inter',system-ui,sans-serif;display:flex;height:100vh;background:var(--bg-app);color:var(--text);-webkit-font-smoothing:antialiased}
-#map-wrap{flex:1 1 0;min-width:0;position:relative;height:100vh;overflow:hidden}
-#map{position:absolute;inset:0;background:var(--bg-panel-2)}
-.leaflet-container{font-family:inherit}
-.leaflet-popup-content-wrapper{border-radius:14px!important;box-shadow:var(--shadow-lg)!important;border:1px solid var(--border)!important;background:var(--bg-panel)!important;color:var(--text)!important}
-.leaflet-popup-content{margin:14px 16px!important;font-size:13px!important;line-height:1.5!important}
-.leaflet-popup-tip{background:var(--bg-panel)!important;border:1px solid var(--border)!important}
-.leaflet-popup-close-button{color:var(--text-muted)!important;padding:8px 8px 0 0!important}
-.leaflet-control-zoom a{background:var(--bg-panel)!important;color:var(--text)!important;border-color:var(--border)!important}
-.leaflet-control-attribution{background:var(--bg-glass)!important;color:var(--text-sub)!important;font-size:10px!important}
-#searchBar{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:calc(100% - 28px);max-width:480px;z-index:1200}
-.search-input-wrap{display:flex;align-items:center;background:var(--bg-glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:0 12px;height:46px}
-.search-input-wrap:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft),var(--shadow-lg)}
-.search-icon{flex:none;color:var(--text-sub);margin-right:10px;display:flex;align-items:center}
-#searchInput{flex:1;border:none;outline:none;background:transparent;font-family:inherit;font-size:14px;color:var(--text);min-width:0}
-#searchInput::placeholder{color:var(--text-sub)}
-#searchClear{flex:none;border:none;background:transparent;color:var(--text-sub);font-size:18px;cursor:pointer;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-left:4px}
-#searchClear:hover{background:var(--bg-hover);color:var(--text)}
-.search-results{margin-top:8px;background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);max-height:340px;overflow-y:auto}
-.search-result{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border)}
-.search-result:last-child{border-bottom:none}
-.search-result:hover{background:var(--bg-hover)}
-.sr-body{flex:1;min-width:0}
-.sr-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sr-addr{font-size:11px;color:var(--text-sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.search-empty{padding:16px;font-size:12px;color:var(--text-sub);text-align:center}
-.search-pin{background:transparent!important;border:none!important}
-.reposition-bar{position:absolute;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px) scale(.95);background:var(--bg-panel);border:1.5px solid var(--warning);border-radius:14px;padding:9px 10px 9px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 20px 40px -12px rgba(245,158,11,.35);z-index:1100;opacity:0;visibility:hidden;pointer-events:none;transition:transform .35s,opacity .25s,visibility 0s .35s;max-width:calc(100% - 32px)}
-.reposition-bar.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);pointer-events:auto;transition:transform .35s,opacity .25s,visibility 0s 0s}
-.rb-icon{flex:none;width:32px;height:32px;border-radius:50%;background:var(--warning-soft);color:var(--warning);display:flex;align-items:center;justify-content:center;font-size:15px}
-.rb-info{flex:1;min-width:0}
-.rb-label{font-size:10px;text-transform:uppercase;font-weight:700;color:var(--warning)}
-.rb-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rb-btn{padding:7px 12px;font-size:12px;font-weight:600;border-radius:8px;border:none;cursor:pointer;font-family:inherit}
-.rb-cancel{background:var(--bg-panel-2);color:var(--text);border:1px solid var(--border)}
-.rb-save{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff}
-.long-press-indicator{position:fixed;width:64px;height:64px;margin-left:-32px;margin-top:-32px;pointer-events:none;z-index:99999}
 
-#sidebar{
-  flex:0 0 380px;
-  width:380px;
-  height:100vh;
-  max-height:100vh;
-  display:block;
-  overflow:hidden;
-  background:var(--bg-panel);
-  border-left:1px solid var(--border);
-  z-index:1000;
-  position:relative;
+<style>
+:root {
+  --bg-app: #f1f5f9;
+  --bg-panel: #ffffff;
+  --bg-panel-sub: #f8fafc;
+  --bg-glass: rgba(255, 255, 255, 0.94);
+  --bg-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-sub: #94a3b8;
+  --primary: #1a73e8;
+  --primary-dark: #1557b0;
+  --primary-soft: #e8f0fe;
+  --primary-glow: rgba(26, 115, 232, 0.25);
+  --success: #137333;
+  --success-soft: #e6f4ea;
+  --warning: #ea8600;
+  --warning-soft: #fef7e0;
+  --danger: #d93025;
+  --danger-soft: #fce8e6;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --code-accent: #38bdf8;
+  --shadow-xs: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
 }
-#statusBar{padding:12px 20px;font-size:12px;font-weight:500;color:var(--text-muted);background:var(--bg-panel-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:relative;z-index:2}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--text-sub);flex:none}
-.dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-soft)}
-.dot.dirty{background:var(--warning);box-shadow:0 0 0 3px var(--warning-soft)}
-.dot.err{background:var(--danger);box-shadow:0 0 0 3px var(--danger-soft)}
-.dot.busy{background:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);animation:pulse 1.4s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 6px transparent}}
-#tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--bg-panel);border-bottom:1px solid var(--border);position:relative;z-index:2}
-.tab-btn{flex:1;padding:11px 6px;border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center;gap:5px;position:relative}
-.tab-btn::after{content:'';position:absolute;left:6px;right:6px;bottom:-1px;height:2.5px;background:var(--primary);border-radius:3px 3px 0 0;transform:scaleX(0);transition:transform .3s}
-.tab-btn:hover{color:var(--text);background:var(--bg-hover)}
-.tab-btn.active{color:var(--primary)}
-.tab-btn.active::after{transform:scaleX(1)}
-.tab-btn .badge{background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;min-width:18px;text-align:center}
-.tab-btn:not(.active) .badge{background:var(--border-strong);color:var(--text-muted)}
-.tab-panel{
-  display:none;
-  position:absolute;
-  top:var(--header-h,90px);
-  left:0;
-  right:0;
-  bottom:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-app: #090d16;
+    --bg-panel: #111827;
+    --bg-panel-sub: #0f172a;
+    --bg-glass: rgba(17, 24, 39, 0.94);
+    --bg-hover: #1e293b;
+    --border: #1e293b;
+    --border-strong: #334155;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-sub: #64748b;
+    --primary: #4285f4;
+    --primary-dark: #1a73e8;
+    --primary-soft: rgba(66, 133, 244, 0.18);
+    --primary-glow: rgba(66, 133, 244, 0.35);
+    --success-soft: rgba(19, 115, 51, 0.18);
+    --warning-soft: rgba(234, 134, 0, 0.18);
+    --danger-soft: rgba(217, 48, 37, 0.18);
+    --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+  }
 }
-.tab-panel.active{display:block}
-.tab-panel::-webkit-scrollbar{width:10px}
-.tab-panel::-webkit-scrollbar-track{background:var(--bg-panel-2)}
-.tab-panel::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;border:2px solid var(--bg-panel)}
-.tab-panel::-webkit-scrollbar-thumb:hover{background:var(--text-sub)}
-.panel{padding:18px 20px;border-bottom:1px solid var(--border)}
-.panel:last-child{border-bottom:none}
-.panel h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-sub);margin-bottom:12px;font-weight:700}
-button{font-family:inherit;padding:11px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;cursor:pointer;font-size:13px;font-weight:600;transition:transform .15s,box-shadow .2s;box-shadow:var(--shadow-glow);display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
-button:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 26px -8px var(--primary-glow)}
-button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
-button.secondary{background:var(--bg-panel-2);color:var(--text);box-shadow:var(--shadow-xs);border:1px solid var(--border)}
-button.secondary:hover:not(:disabled){background:var(--bg-hover);box-shadow:var(--shadow-sm)}
-button.ghost{background:transparent;color:var(--primary);border:1px solid var(--border);box-shadow:none}
-button.ghost:hover:not(:disabled){background:var(--primary-soft);box-shadow:none;transform:none}
-button.danger{background:transparent;color:var(--danger);border:1px solid var(--border);box-shadow:none}
-button.danger:hover:not(:disabled){background:var(--danger-soft);box-shadow:none;transform:none}
-button.block{width:100%;margin-top:8px}
-button.copy-btn{padding:6px 12px;font-size:11.5px;background:rgba(255,255,255,.1);color:#e2e8f0;border:1px solid rgba(255,255,255,.15);box-shadow:none}
-button.copy-btn:hover:not(:disabled){background:rgba(255,255,255,.2);transform:none;box-shadow:none}
-button.copy-btn.copied{background:var(--success);border-color:var(--success);color:#fff}
-input[type="email"],input[type="text"],input[type="url"]{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;margin-bottom:8px;background:var(--bg-panel-2);color:var(--text)}
-input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);box-shadow:0 0 0 4px var(--primary-soft)}
-.checkrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text);margin:14px 0 4px;cursor:pointer;user-select:none}
-.checkrow input{appearance:none;width:38px;height:22px;background:var(--border-strong);border-radius:22px;position:relative;cursor:pointer;flex:none;margin:0;transition:background .25s}
-.checkrow input::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .25s}
-.checkrow input:checked{background:var(--primary)}
-.checkrow input:checked::after{transform:translateX(16px)}
-#locationList{padding:14px 16px}
-.empty{color:var(--text-sub);font-size:13px;text-align:center;padding:48px 20px;line-height:1.6}
-.empty svg{display:block;margin:0 auto 16px;opacity:.35}
-.empty b{color:var(--text-muted);font-weight:600;display:block;margin-bottom:4px;font-size:14px}
-.loc-item{background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .2s,box-shadow .25s,transform .2s}
-.loc-item:hover{border-color:var(--primary);box-shadow:0 8px 24px -10px var(--primary-glow);transform:translateY(-1px)}
-.loc-item.repositioning{border-color:var(--warning);background:var(--warning-soft)}
-.loc-item .info{flex:1;min-width:0}
-.loc-item .title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.loc-item .coords{font-size:11px;color:var(--text-sub);margin-top:3px;font-variant-numeric:tabular-nums}
-.loc-item .acts{display:flex;gap:3px;flex:none;opacity:.55;transition:opacity .2s}
-.loc-item:hover .acts{opacity:1}
-.loc-item .acts button{padding:5px 7px;font-size:12px;background:transparent;color:var(--text-muted);box-shadow:none;border-radius:8px;line-height:1}
-.loc-item .acts button:hover{background:var(--bg-hover);color:var(--primary);transform:none;box-shadow:none}
-.loc-item .acts button.dir{background:var(--primary-soft);color:var(--primary)}
-.loc-item .acts button.dir:hover{background:var(--primary);color:#fff}
-.loc-item .acts button.move:hover{background:var(--warning-soft);color:var(--warning)}
-.loc-item .acts button.del:hover{background:var(--danger-soft);color:var(--danger)}
-.info-card{background:var(--bg-panel-2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.info-card + .info-card{margin-top:8px}
-.info-card .k{color:var(--text-sub);font-size:11px;text-transform:uppercase;font-weight:700;flex:none}
-.info-card .v{font-weight:600;text-align:right;word-break:break-word;font-size:12.5px}
-.info-card .v.small{font-size:11.5px;font-weight:500}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;text-transform:uppercase}
-.pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
-.pill.ok{background:var(--success-soft);color:var(--success)}
-.pill.off{background:var(--bg-hover);color:var(--text-muted)}
-.pill.warn{background:var(--warning-soft);color:var(--warning)}
-.pill.err{background:var(--danger-soft);color:var(--danger)}
-.hint{font-size:11.5px;color:var(--text-sub);margin-top:10px;line-height:1.55}
-.hint code{background:var(--bg-hover);color:var(--primary);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px}
-.divider{height:1px;background:var(--border);margin:16px -20px}
-.code-section{background:var(--code-bg);border-radius:14px;overflow:hidden}
-.code-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(255,255,255,.04)}
-.code-header .file-info{display:flex;align-items:center;gap:8px}
-.code-header .file-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b}
-.code-header .file-name{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--code-accent)}
-.code-header .file-lang{font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:600}
-.code-body{max-height:0;overflow:hidden;transition:max-height .45s}
-.code-body.open{max-height:640px;overflow-y:auto}
-.code-body pre{margin:0;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;color:var(--code-text);white-space:pre;overflow-x:auto}
-.code-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;background:rgba(255,255,255,.02);color:#cbd5e1;font-size:12px;font-weight:600}
-.code-toggle .chev{transition:transform .3s;color:var(--code-accent)}
-.code-toggle.open .chev{transform:rotate(180deg)}
-.stepper{counter-reset:step;position:relative}
-.step{position:relative;padding:0 0 20px 40px;counter-increment:step}
-.step:last-child{padding-bottom:0}
-.step::before{content:counter(step);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1}
-.step:not(:last-child)::after{content:'';position:absolute;left:12.5px;top:28px;bottom:0;width:1.5px;background:linear-gradient(180deg,var(--border-strong),transparent)}
-.step-title{font-size:13px;font-weight:600;line-height:1.4;padding-top:3px}
-.step-desc{font-size:12px;color:var(--text-muted);line-height:1.6;margin-top:3px}
-.step-desc code{background:var(--bg-hover);color:var(--primary);padding:1.5px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px}
-.step-desc a{color:var(--primary);text-decoration:none;font-weight:600}
-.step-cta{margin-top:8px}
-.callout{border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.55;display:flex;gap:10px;align-items:flex-start;margin-top:10px}
-.callout .ico{font-size:14px;flex:none}
-.callout .body{flex:1;min-width:0}
-.callout .body b{font-weight:700;display:block;margin-bottom:2px;font-size:11.5px}
-.callout.warn{background:var(--warning-soft);border-left:3px solid var(--warning)}
-.callout.warn .body b{color:var(--warning)}
-.callout.info{background:var(--primary-soft);border-left:3px solid var(--primary)}
-.callout.info .body b{color:var(--primary)}
-.callout.danger{background:var(--danger-soft);border-left:3px solid var(--danger)}
-.callout.danger .body b{color:var(--danger)}
-.step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;background:var(--primary);color:#fff;font-size:11px;font-weight:800;margin-right:8px;flex:none}
-.collapsible-panel{border-bottom:1px solid var(--border)}
-.collapsible-header{display:flex;align-items:center;gap:10px;padding:18px 20px;cursor:pointer;user-select:none}
-.collapsible-header:hover{background:var(--bg-hover)}
-.collapsible-header .title{flex:1;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-sub);font-weight:700;display:flex;align-items:center}
-.collapsible-header .chev{flex:none;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--bg-panel-2);border:1px solid var(--border);color:var(--primary);font-size:11px;transition:transform .3s}
-.collapsible-panel.open .collapsible-header .chev{transform:rotate(180deg)}
-.collapsible-body{max-height:0;overflow:hidden;transition:max-height .5s}
-.collapsible-panel.open .collapsible-body{max-height:50000px}
-.collapsible-body-inner{padding:0 20px 20px}
-.diag-results{margin-top:12px;display:none}
-.diag-results.show{display:block}
-.diag-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;font-size:12px;border-radius:8px;margin-bottom:6px;background:var(--bg-panel-2);border:1px solid var(--border);line-height:1.5}
-.diag-row:last-child{margin-bottom:0}
-.diag-row .icon{flex:none;font-size:13px}
-.diag-row .text{flex:1;min-width:0}
-.diag-row .label{font-weight:600}
-.diag-row .detail{color:var(--text-muted);font-size:11px;margin-top:3px;font-family:'JetBrains Mono',monospace}
-.diag-row .raw{margin-top:6px;padding:8px 10px;background:var(--code-bg);color:#e2e8f0;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10.5px;max-height:140px;overflow-x:auto;white-space:pre-wrap;word-break:break-all}
-.diag-row.pass{border-left:3px solid var(--success)}
-.diag-row.fail{border-left:3px solid var(--danger);background:var(--danger-soft)}
-.diag-row.warn{border-left:3px solid var(--warning);background:var(--warning-soft)}
-#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(24px);background:var(--text);color:var(--bg-panel);padding:13px 22px;border-radius:14px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .28s,transform .35s;z-index:9999;max-width:80vw;box-shadow:var(--shadow-lg)}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media (max-width:720px){
-  body{flex-direction:column}
-  #map-wrap{flex:0 0 44vh;height:44vh;min-width:0}
-  #sidebar{flex:1 1 0;width:100%;min-width:0;height:auto;max-height:none;border-left:none;border-top:1px solid var(--border);border-radius:28px 28px 0 0;margin-top:-20px;z-index:1100}
-  #searchBar{top:10px;width:calc(100% - 20px)}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  background: var(--bg-app);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#map-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+  background: #f1f3f4;
+  z-index: 1;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border) !important;
+  background: var(--bg-panel) !important;
+  color: var(--text) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 14px 16px !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+.leaflet-popup-tip {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border) !important;
+}
+.leaflet-control-zoom {
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-md) !important;
+}
+.leaflet-control-zoom a {
+  background: var(--bg-panel) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.leaflet-control-attribution {
+  background: var(--bg-glass) !important;
+  color: var(--text-sub) !important;
+  font-size: 10px !important;
+  backdrop-filter: blur(8px);
+}
+
+.map-float-actions {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 1250;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-btn-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all .15s ease;
+}
+.map-btn-icon:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+.map-btn-icon.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.layer-menu {
+  position: absolute;
+  right: 14px;
+  top: 66px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1300;
+  min-width: 230px;
+}
+.layer-menu.open { display: flex; }
+.layer-menu-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-sub);
+  padding: 6px 10px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.layer-opt {
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: none;
+  transition: background .15s ease;
+}
+.layer-opt:hover { background: var(--bg-hover); transform: none; box-shadow: none; }
+.layer-opt.active { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+.layer-opt-icon { font-size: 18px; flex: none; }
+.layer-opt-info { display: flex; flex-direction: column; }
+.layer-opt-name { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+.layer-opt-desc { font-size: 10.5px; color: var(--text-muted); line-height: 1.25; font-weight: 400; }
+.layer-opt.active .layer-opt-desc { color: var(--primary); opacity: .9; }
+
+.traffic-badge {
+  position: absolute;
+  bottom: 22px;
+  left: 14px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  z-index: 1050;
+  pointer-events: none;
+}
+.traffic-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0f9d58;
+  box-shadow: 0 0 0 2px rgba(15, 157, 88, 0.25);
+  animation: trafficBlink 2s infinite ease-in-out;
+}
+@keyframes trafficBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+}
+.traffic-legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+}
+.traffic-bar { width: 10px; height: 3.5px; border-radius: 2px; }
+.traffic-bar.green { background: #0f9d58; }
+.traffic-bar.orange { background: #f4b400; }
+.traffic-bar.red { background: #db4437; }
+.traffic-bar.darkred { background: #8b0000; }
+
+#searchBar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: calc(100% - 120px);
+  max-width: 440px;
+  z-index: 1150;
+  pointer-events: auto;
+}
+
+.search-input-box {
+  display: flex;
+  align-items: center;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  padding: 0 10px 0 14px;
+  height: 48px;
+  transition: box-shadow .2s, border-color .2s;
+}
+.search-input-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft), var(--shadow-lg);
+}
+
+.search-icon-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 8px 0 0;
+  box-shadow: none;
+}
+.search-icon-btn:hover { transform: none; box-shadow: none; }
+
+#searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 0;
+}
+#searchInput::placeholder { color: var(--text-sub); }
+
+.search-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+  margin-right: 6px;
+  flex: none;
+}
+.search-spinner.active { display: block; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.search-act-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  flex: none;
+}
+.search-act-btn:hover { background: var(--bg-hover); color: var(--text); transform: none; box-shadow: none; }
+
+.search-chips-wrap {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 2px 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.search-chips-wrap::-webkit-scrollbar { display: none; }
+
+.search-chip {
+  background: var(--bg-panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.search-chip:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.search-chip.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary-dark);
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.search-results {
+  margin-top: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  max-height: 340px;
+  overflow-y: auto;
+  display: none;
+}
+.search-results-header {
+  padding: 9px 14px;
+  background: var(--bg-panel-sub);
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.clear-cat-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: none;
+}
+.clear-cat-btn:hover { text-decoration: underline; transform: none; }
+
+.search-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s ease;
+}
+.search-result:last-child { border-bottom: none; }
+.search-result:hover, .search-result.selected { background: var(--bg-hover); }
+.search-result-icon {
+  font-size: 16px;
+  flex: none;
+  width: 24px;
+  text-align: center;
+  padding-top: 1px;
+}
+.sr-body { flex: 1; min-width: 0; }
+.sr-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sr-addr {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.search-empty {
+  padding: 16px;
+  font-size: 12px;
+  color: var(--text-sub);
+  text-align: center;
+}
+
+.reposition-bar {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px) scale(.95);
+  background: var(--bg-panel);
+  border: 1.5px solid var(--warning);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1200;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all .3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: calc(100% - 32px);
+}
+.reposition-bar.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+  pointer-events: auto;
+}
+.rb-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--warning-soft);
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.rb-info { flex: 1; min-width: 0; }
+.rb-label { font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--warning); letter-spacing: .05em; }
+.rb-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rb-btn {
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.rb-cancel { background: var(--bg-panel-sub); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+.rb-cancel:hover { background: var(--bg-hover); transform: none; }
+.rb-save { background: var(--primary); color: #fff; box-shadow: none; }
+.rb-save:hover { background: var(--primary-dark); transform: none; }
+
+.long-press-indicator {
+  position: fixed;
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  margin-top: -32px;
+  pointer-events: none;
+  z-index: 99999;
+}
+
+#sidebar {
+  flex: 0 0 390px;
+  width: 390px;
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  z-index: 1000;
+  position: relative;
+}
+
+#statusBar {
+  padding: 12px 18px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-panel-sub);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+}
+.status-left { display: flex; align-items: center; gap: 8px; }
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-sub);
+  flex: none;
+}
+.dot.on { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+.dot.dirty { background: var(--warning); box-shadow: 0 0 0 3px var(--warning-soft); }
+.dot.err { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+.dot.busy { background: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); animation: pulse 1.4s infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px transparent; } }
+
+#tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px 0;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+.tab-btn {
+  flex: 1;
+  padding: 11px 12px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  box-shadow: none;
+}
+.tab-btn:hover { color: var(--text); background: var(--bg-hover); transform: none; box-shadow: none; }
+.tab-btn.active { color: var(--primary); }
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 2.5px;
+  background: var(--primary);
+  border-radius: 3px 3px 0 0;
+}
+.tab-btn .badge {
+  background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+.tab-btn:not(.active) .badge { background: var(--border-strong); color: var(--text-muted); }
+
+.tab-panel {
+  display: none;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.tab-panel.active { display: block; }
+.tab-panel::-webkit-scrollbar { width: 8px; }
+.tab-panel::-webkit-scrollbar-track { background: var(--bg-panel-sub); }
+.tab-panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid var(--bg-panel); }
+
+.panel {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.panel:last-child { border-bottom: none; }
+.panel h3 {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+button {
+  font-family: inherit;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: transform .15s, box-shadow .2s, background .15s;
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+button:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+button.secondary {
+  background: var(--bg-panel-sub);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+}
+button.secondary:hover:not(:disabled) { background: var(--bg-hover); }
+button.ghost {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+button.ghost:hover:not(:disabled) { background: var(--primary-soft); transform: none; box-shadow: none; }
+button.danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+button.danger:hover:not(:disabled) { background: var(--danger-soft); transform: none; box-shadow: none; }
+button.block { width: 100%; margin-top: 8px; }
+
+input[type="email"], input[type="text"], input[type="url"], textarea, select {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  background: var(--bg-panel-sub);
+  color: var(--text);
+  margin-bottom: 8px;
+  outline: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  background: var(--bg-panel);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.checkrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+  margin: 14px 0 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.checkrow input {
+  appearance: none;
+  width: 38px;
+  height: 22px;
+  background: var(--border-strong);
+  border-radius: 22px;
+  position: relative;
+  cursor: pointer;
+  flex: none;
+  margin: 0;
+  transition: background .25s;
+}
+.checkrow input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .25s;
+}
+.checkrow input:checked { background: var(--primary); }
+.checkrow input:checked::after { transform: translateX(16px); }
+
+.list-filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-panel-sub);
+  border-bottom: 1px solid var(--border);
+}
+.list-filter-bar input {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+  flex: 1;
+}
+.list-filter-bar select {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  width: auto;
+  flex: none;
+}
+
+#locationList { padding: 12px 16px; }
+.empty {
+  color: var(--text-sub);
+  font-size: 13px;
+  text-align: center;
+  padding: 44px 16px;
+  line-height: 1.6;
+}
+.empty svg { display: block; margin: 0 auto 14px; opacity: .35; }
+.empty b { color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; font-size: 14px; }
+
+.loc-item {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.loc-item:hover {
+  border-color: var(--primary);
+  box-shadow: 0 6px 16px -6px var(--primary-glow);
+  transform: translateY(-1px);
+}
+.loc-item.repositioning {
+  border-color: var(--warning);
+  background: var(--warning-soft);
+}
+.loc-tag-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-right: 6px;
+}
+.loc-tag-home { background: #e0e7ff; color: #4338ca; }
+.loc-tag-work { background: #e0f2fe; color: #0369a1; }
+.loc-tag-fav { background: #fef3c7; color: #b45309; }
+.loc-tag-travel { background: #dcfce7; color: #15803d; }
+.loc-tag-place { background: #f1f5f9; color: #475569; }
+
+.loc-item .info { flex: 1; min-width: 0; }
+.loc-item .title {
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+}
+.loc-item .coords {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.loc-dist { color: var(--primary); font-weight: 700; }
+.loc-item .acts {
+  display: flex;
+  gap: 4px;
+  flex: none;
+  opacity: .7;
+}
+.loc-item:hover .acts { opacity: 1; }
+.loc-item .acts button {
+  padding: 5px 8px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  box-shadow: none;
+  border-radius: 8px;
+}
+.loc-item .acts button:hover {
+  background: var(--bg-hover);
+  color: var(--primary);
+  transform: none;
+}
+.loc-item .acts button.del:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.info-card {
+  background: var(--bg-panel-sub);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+.info-card .k { color: var(--text-sub); font-size: 11px; text-transform: uppercase; font-weight: 700; flex: none; }
+.info-card .v { font-weight: 600; text-align: right; word-break: break-word; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+.pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--success-soft); color: var(--success); }
+.pill.off { background: var(--bg-hover); color: var(--text-muted); }
+.pill.warn { background: var(--warning-soft); color: var(--warning); }
+.pill.err { background: var(--danger-soft); color: var(--danger); }
+.hint { font-size: 11.5px; color: var(--text-sub); margin-top: 10px; line-height: 1.5; }
+.hint code { background: var(--bg-hover); color: var(--primary); padding: 1px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
+.divider { height: 1px; background: var(--border); margin: 16px -18px; }
+
+.code-section { background: var(--code-bg); border-radius: 12px; overflow: hidden; margin-top: 8px; }
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, .05);
+}
+.code-header .file-info { display: flex; align-items: center; gap: 8px; }
+.code-header .file-dot { width: 8px; height: 8px; border-radius: 50%; background: #ea8600; }
+.code-header .file-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--code-accent); }
+.code-header .file-lang { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+.copy-btn { padding: 5px 11px; font-size: 11px; background: rgba(255, 255, 255, .1); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, .15); box-shadow: none; }
+.copy-btn:hover { background: rgba(255, 255, 255, .2); transform: none; box-shadow: none; }
+.code-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+.code-body.open { max-height: 500px; overflow-y: auto; }
+.code-body pre { margin: 0; padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; color: var(--code-text); white-space: pre; overflow-x: auto; }
+.code-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; background: rgba(255, 255, 255, .03); color: #cbd5e1; font-size: 11.5px; font-weight: 600; }
+.code-toggle .chev { transition: transform .3s; color: var(--code-accent); }
+.code-toggle.open .chev { transform: rotate(180deg); }
+
+.collapsible-guide {
+  border-bottom: 1px solid var(--border);
+}
+.guide-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg-panel);
+}
+.guide-header:hover { background: var(--bg-hover); }
+.guide-header .title {
+  flex: 1;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+.guide-header .chev {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--bg-panel-sub);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  font-size: 11px;
+  transition: transform .3s ease;
+}
+.collapsible-guide.open .guide-header .chev { transform: rotate(180deg); }
+.guide-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .45s cubic-bezier(0, 1, 0, 1);
+  background: var(--bg-panel);
+}
+.collapsible-guide.open .guide-body {
+  max-height: 3800px;
+  transition: max-height .5s cubic-bezier(1, 0, 1, 0);
+}
+.guide-body-inner { padding: 0 18px 20px; }
+
+.stepper { counter-reset: step; position: relative; }
+.step { position: relative; padding: 0 0 20px 38px; counter-increment: step; }
+.step:last-child { padding-bottom: 0; }
+.step::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 26px;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--border-strong);
+}
+.step-title { font-size: 12.5px; font-weight: 700; padding-top: 2px; }
+.step-desc { font-size: 12px; color: var(--text-muted); line-height: 1.55; margin-top: 3px; }
+.step-desc code { background: var(--bg-hover); color: var(--primary); padding: 1.5px 5px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; }
+.callout {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+.callout.warn { background: var(--warning-soft); border-left: 3px solid var(--warning); }
+.callout.warn b { color: var(--warning); display: block; margin-bottom: 2px; }
+.callout.info { background: var(--primary-soft); border-left: 3px solid var(--primary); }
+.callout.info b { color: var(--primary); display: block; margin-bottom: 2px; }
+
+.diag-results { margin-top: 10px; display: none; }
+.diag-results.show { display: block; }
+.diag-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--bg-panel-sub);
+  border: 1px solid var(--border);
+}
+.diag-row.pass { border-left: 3px solid var(--success); }
+.diag-row.fail { border-left: 3px solid var(--danger); background: var(--danger-soft); }
+.diag-row.warn { border-left: 3px solid var(--warning); background: var(--warning-soft); }
+.diag-row .text { flex: 1; min-width: 0; }
+.diag-row .label { font-weight: 600; }
+.diag-row .detail { color: var(--text-muted); font-size: 10.5px; margin-top: 2px; font-family: 'JetBrains Mono', monospace; word-break: break-all; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  animation: modalIn .2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  box-shadow: none;
+}
+.modal-close:hover { color: var(--text); transform: none; }
+.modal-body { padding: 16px 18px; }
+.modal-footer {
+  padding: 12px 18px;
+  background: var(--bg-panel-sub);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gmap-popup-card { min-width: 210px; max-width: 280px; }
+.gmap-popup-title { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 3px; }
+.gmap-popup-addr { font-size: 11.5px; color: var(--text-muted); margin-bottom: 6px; line-height: 1.4; }
+.gmap-popup-coords { font-size: 10.5px; color: var(--text-sub); font-family: 'JetBrains Mono', monospace; margin-bottom: 10px; }
+.gmap-popup-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.gmap-btn {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  cursor: pointer;
+}
+.gmap-btn-save { background: var(--primary); color: #fff; }
+.gmap-btn-dir { background: var(--bg-panel-sub); color: var(--primary); border: 1px solid var(--border); }
+.gmap-btn-dir:hover { background: var(--primary-soft); }
+
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(24px);
+  background: var(--text);
+  color: var(--bg-panel);
+  padding: 11px 20px;
+  border-radius: 30px;
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  z-index: 99999;
+  box-shadow: var(--shadow-lg);
+  max-width: 85vw;
+  text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Responsive Viewports */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  #map-wrap { flex: 0 0 46vh; height: 46vh; }
+  #sidebar {
+    flex: 1 1 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    margin-top: -14px;
+    z-index: 1100;
+  }
+  #searchBar { top: 10px; left: 10px; width: calc(100% - 96px); max-width: calc(100% - 96px); }
+  .map-float-actions { top: 10px; right: 10px; }
+  .layer-menu { top: 58px; right: 10px; }
+  .traffic-badge { bottom: 10px; left: 10px; }
 }
 </style>
 </head>
@@ -219,31 +1148,98 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
 
 <div id="map-wrap">
   <div id="map"></div>
+
+  <!-- Google Maps Styled Search Bar -->
   <div id="searchBar">
-    <div class="search-input-wrap">
-      <span class="search-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </span>
-      <input id="searchInput" type="text" placeholder="Search a place, city, or address…" autocomplete="off" spellcheck="false" />
-      <button id="searchClear" hidden>×</button>
+    <div class="search-input-box">
+      <button class="search-icon-btn" id="searchSubmitBtn" title="Search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <input id="searchInput" type="text" placeholder="Search places, addresses, or coords…" autocomplete="off" spellcheck="false" />
+      <div class="search-spinner" id="searchSpinner"></div>
+      <button class="search-act-btn" id="searchClear" style="display:none;" title="Clear">×</button>
     </div>
-    <div id="searchResults" class="search-results" hidden></div>
+
+    <!-- Category Chips for Local Search -->
+    <div class="search-chips-wrap" id="searchChips">
+      <button class="search-chip" data-query="cafe" data-label="Cafes">☕ Cafes</button>
+      <button class="search-chip" data-query="restaurant" data-label="Restaurants">🍽️ Restaurants</button>
+      <button class="search-chip" data-query="fuel" data-label="Fuel">⛽ Fuel</button>
+      <button class="search-chip" data-query="hospital" data-label="Hospitals">🏥 Hospitals</button>
+      <button class="search-chip" data-query="supermarket" data-label="Groceries">🛒 Groceries</button>
+      <button class="search-chip" data-query="hotel" data-label="Hotels">🏨 Hotels</button>
+    </div>
+
+    <!-- Autocomplete & Category Search Results Dropdown -->
+    <div id="searchResults" class="search-results"></div>
   </div>
-  <div id="repositionBar" class="reposition-bar" hidden>
+
+  <!-- Floating Map Action Buttons -->
+  <div class="map-float-actions">
+    <button class="map-btn-icon" id="btnLayerToggle" title="Map Layers">🗺️</button>
+    <button class="map-btn-icon" id="btnFitAll" title="Fit All Saved Pins">📍</button>
+  </div>
+
+  <!-- Layer Select Menu: Google Classic + Live Traffic Default -->
+  <div class="layer-menu" id="layerMenu">
+    <div class="layer-menu-title">
+      <span>Map Style</span>
+      <span style="font-size:10px;color:var(--success);font-weight:700;">● Live Traffic</span>
+    </div>
+    <button class="layer-opt active" data-layer="traffic">
+      <span class="layer-opt-icon">🚦</span>
+      <div class="layer-opt-info">
+        <span class="layer-opt-name">Google Classic (Live Traffic)</span>
+        <span class="layer-opt-desc">Classic streets with real-time traffic flow</span>
+      </div>
+    </button>
+    <button class="layer-opt" data-layer="classic">
+      <span class="layer-opt-icon">🗺️</span>
+      <div class="layer-opt-info">
+        <span class="layer-opt-name">Google Classic (Standard)</span>
+        <span class="layer-opt-desc">Standard clean Google roadmap</span>
+      </div>
+    </button>
+    <button class="layer-opt" data-layer="satellite">
+      <span class="layer-opt-icon">🛰️</span>
+      <div class="layer-opt-info">
+        <span class="layer-opt-name">Satellite Hybrid</span>
+        <span class="layer-opt-desc">Google Satellite with road labels</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- Live Traffic Status Badge -->
+  <div class="traffic-badge" id="trafficBadge">
+    <div class="traffic-pulse"></div>
+    <span>Live Traffic</span>
+    <div class="traffic-legend" title="Fast to Slow">
+      <span class="traffic-bar green"></span>
+      <span class="traffic-bar orange"></span>
+      <span class="traffic-bar red"></span>
+      <span class="traffic-bar darkred"></span>
+    </div>
+  </div>
+
+  <!-- Reposition Bar -->
+  <div id="repositionBar" class="reposition-bar">
     <div class="rb-icon">🎯</div>
     <div class="rb-info">
-      <div class="rb-label">Repositioning</div>
+      <div class="rb-label">Repositioning Pin</div>
       <div class="rb-title" id="repositionTitle">—</div>
     </div>
     <button id="repositionCancel" class="rb-btn rb-cancel">Cancel</button>
-    <button id="repositionSave" class="rb-btn rb-save">Save</button>
+    <button id="repositionSave" class="rb-btn rb-save">Save Location</button>
   </div>
 </div>
 
 <aside id="sidebar">
   <div id="statusBar">
-    <span class="dot" id="statusDot"></span>
-    <span id="statusText">Loading…</span>
+    <div class="status-left">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Ready</span>
+    </div>
+    <span id="connState"><span class="pill off">Not Connected</span></span>
   </div>
 
   <div id="tabs">
@@ -252,182 +1248,299 @@ input:focus{outline:none;border-color:var(--primary);background:var(--bg-panel);
       <span class="badge" id="tabBadge">0</span>
     </button>
     <button class="tab-btn" data-tab="settings">
-      <span>⚙️</span><span>Settings</span>
-    </button>
-    <button class="tab-btn" data-tab="data">
-      <span>💾</span><span>Data</span>
+      <span>⚙️</span><span>Drive Sync</span>
     </button>
   </div>
 
-  <!-- ============ LOCATIONS ============ -->
+  <!-- Locations Tab -->
   <section id="tab-locations" class="tab-panel active">
     <div class="panel">
-      <h3>Current Location</h3>
+      <h3>Quick GPS Actions</h3>
       <button id="btnTrack" class="block">📡 Get My Location</button>
-      <button id="btnSaveCurrent" class="secondary block" disabled>💾 Save This Location</button>
-      <div class="hint">Drag the marker to fine-tune, or <b>press and hold anywhere on the map for 3 seconds</b> to drop a pin.</div>
+      <button id="btnSaveCurrent" class="secondary block" disabled>💾 Save Current / Pinned Spot</button>
+      <div class="hint">Tap <b>Get My Location</b>, drag the pin to fine-tune, or <b>press and hold anywhere on the map for 3s</b> to drop a pin.</div>
     </div>
-    <div class="panel" style="padding-bottom:6px;border-bottom:none;"><h3>Saved Locations</h3></div>
+
+    <!-- Filter and Sort Bar -->
+    <div class="list-filter-bar">
+      <input type="text" id="locFilterInput" placeholder="Filter locations…" />
+      <select id="locSortSelect">
+        <option value="newest">Newest First</option>
+        <option value="nearest">Nearest to Me</option>
+        <option value="az">Name A-Z</option>
+      </select>
+    </div>
+
+    <!-- Locations List Container -->
     <div id="locationList"></div>
   </section>
 
-  <!-- ============ SETTINGS ============ -->
+  <!-- Drive Sync & Settings Tab -->
   <section id="tab-settings" class="tab-panel">
     <div class="panel">
       <h3>Gmail Account</h3>
       <input type="email" id="gmailInput" placeholder="you@gmail.com" autocomplete="email" />
       <button id="btnSaveGmail" class="secondary block">Save Gmail ID</button>
-      <div class="hint">Stored locally and embedded in the Drive JSON.</div>
+      <div class="hint">Stored locally and embedded in the Drive JSON payload.</div>
     </div>
 
+    <!-- Step 1: Apps Script Code -->
     <div class="panel">
-      <h3 style="display:flex;align-items:center;"><span class="step-badge">1</span> Copy the Apps Script Code</h3>
+      <h3><span style="color:var(--primary);font-weight:800;">1.</span> Copy Apps Script Code</h3>
       <div class="code-section">
         <div class="code-header">
           <div class="file-info">
             <span class="file-dot"></span>
             <span class="file-name">Code.gs</span>
-            <span class="file-lang">Apps Script</span>
+            <span class="file-lang">Google Apps Script</span>
           </div>
           <button class="copy-btn" id="btnCopyAppsScript">📋 Copy code</button>
         </div>
         <div class="code-body" id="codeBody"><pre><code id="appsScriptCode"></code></pre></div>
-        <div class="code-toggle" id="codeToggle"><span>Show / hide the code</span><span class="chev">▼</span></div>
+        <div class="code-toggle" id="codeToggle"><span>Show / Hide Code</span><span class="chev">▼</span></div>
       </div>
-      <div class="hint">Copy this exact code. Do not modify it.</div>
+      <div class="hint">This script manages <code>Saved address/saved_address.json</code> in your Google Drive.</div>
     </div>
 
-    <div class="collapsible-panel" id="deployPanel">
-      <div class="collapsible-header" id="deployHeader">
-        <div class="title"><span class="step-badge">2</span> Deploy &amp; Get the Web App URL</div>
+    <!-- Step 2: 10-Step Interactive Deployment Guide (Collapsed by default) -->
+    <div class="collapsible-guide" id="deployGuide">
+      <div class="guide-header" id="deployGuideHeader">
+        <div class="title"><span style="color:var(--primary);font-weight:800;margin-right:6px;">2.</span> Deployment Guide (10 Steps)</div>
         <span class="chev">▼</span>
       </div>
-      <div class="collapsible-body">
-        <div class="collapsible-body-inner">
+      <div class="guide-body">
+        <div class="guide-body-inner">
           <div class="stepper">
             <div class="step">
               <div class="step-title">Open Google Apps Script</div>
-              <div class="step-desc">Go to <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> and sign in.</div>
-              <div class="step-cta"><button class="ghost" onclick="window.open('https://script.google.com/home/projects/create','_blank','noopener')">🚀 Open Apps Script ↗</button></div>
+              <div class="step-desc">Go to <a href="https://script.google.com" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600;">script.google.com</a> and sign into your Google account.</div>
+              <div style="margin-top:6px;">
+                <button class="ghost" onclick="window.open('https://script.google.com/home/projects/create','_blank','noopener')">🚀 Open New Script ↗</button>
+              </div>
             </div>
-            <div class="step"><div class="step-title">Create a new project</div><div class="step-desc">Click <code>+ New project</code>.</div></div>
-            <div class="step"><div class="step-title">Paste the code</div><div class="step-desc">Select all (Ctrl/⌘ + A), delete, then paste from <b>Step 1</b>.</div></div>
-            <div class="step"><div class="step-title">Save the project</div><div class="step-desc">Press <code>Ctrl + S</code> / <code>⌘ + S</code>.</div></div>
-            <div class="step"><div class="step-title">Start a new deployment</div><div class="step-desc">Click <b>Deploy</b> → <b>New deployment</b>.</div></div>
-            <div class="step"><div class="step-title">Choose "Web app"</div><div class="step-desc">Click the <b>⚙ gear icon</b> → <b>Web app</b>.</div></div>
             <div class="step">
-              <div class="step-title">Set permissions</div>
-              <div class="step-desc"><br>• <b>Execute as:</b> <code>Me</code><br>• <b>Who has access:</b> <code>Anyone</code></div>
-              <div class="callout warn"><span class="ico">⚠️</span><div class="body"><b>Critical</b>"Who has access" must be <b>Anyone</b>.</div></div>
+              <div class="step-title">Create a new project</div>
+              <div class="step-desc">Click <b>+ New project</b> in the top left corner.</div>
             </div>
-            <div class="step"><div class="step-title">Authorize</div><div class="step-desc">Click <b>Deploy</b> → <b>Authorize access</b> → <b>Advanced</b> → <b>Go to project (unsafe)</b> → <b>Allow</b>.</div></div>
             <div class="step">
-              <div class="step-title">Copy the Web App URL</div>
-              <div class="step-desc">Copy the URL — it ends in <code>/exec</code>.</div>
-              <div class="callout info"><span class="ico">ℹ️</span><div class="body"><b>Use /exec</b>Never use <code>/dev</code>.</div></div>
+              <div class="step-title">Paste the Code</div>
+              <div class="step-desc">In the editor, clear existing template code (Ctrl/Cmd + A, Backspace) and paste the code from <b>Step 1</b> above.</div>
             </div>
-            <div class="step"><div class="step-title">⚠ Re-deploy after code changes</div><div class="step-desc">Go to <b>Deploy → Manage deployments → ✏️ Edit → New version → Deploy</b>.</div></div>
+            <div class="step">
+              <div class="step-title">Save Project</div>
+              <div class="step-desc">Click the 💾 <b>Save</b> disk icon or press <code>Ctrl + S</code> / <code>Cmd + S</code>.</div>
+            </div>
+            <div class="step">
+              <div class="step-title">Start Deployment</div>
+              <div class="step-desc">Click the blue <b>Deploy</b> button at the top right, then select <b>New deployment</b>.</div>
+            </div>
+            <div class="step">
+              <div class="step-title">Select Web App Type</div>
+              <div class="step-desc">Click the gear icon ⚙️ next to "Select type" and choose <b>Web app</b>.</div>
+            </div>
+            <div class="step">
+              <div class="step-title">Configure Permissions (CRITICAL)</div>
+              <div class="step-desc">
+                • <b>Execute as:</b> <code>Me (your@gmail.com)</code><br>
+                • <b>Who has access:</b> <code>Anyone</code>
+              </div>
+              <div class="callout warn">
+                <span>⚠️</span>
+                <div><b>Mandatory Setting</b>"Who has access" MUST be set to <b>Anyone</b> so the tracker can sync without OAuth redirects.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-title">Authorize Access</div>
+              <div class="step-desc">Click <b>Deploy</b> → Click <b>Authorize access</b> → Select your Google account → Click <b>Advanced</b> → Click <b>Go to Untitled project (unsafe)</b> → Click <b>Allow</b>.</div>
+            </div>
+            <div class="step">
+              <div class="step-title">Copy Web App URL</div>
+              <div class="step-desc">Copy the generated URL under "Web app". It MUST end with <code>/exec</code>.</div>
+              <div class="callout info">
+                <span>ℹ️</span>
+                <div><b>Use /exec</b>Never use the <code>/dev</code> test URL.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-title">Updating Code in the Future</div>
+              <div class="step-desc">If you ever edit <code>Code.gs</code>, you must click <b>Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy</b>.</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Step 3: Connect Script URL -->
     <div class="panel">
-      <h3 style="display:flex;align-items:center;"><span class="step-badge">3</span> Paste the Bridge URL</h3>
-      <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/…/exec" />
+      <h3><span style="color:var(--primary);font-weight:800;">3.</span> Paste Web App URL</h3>
+      <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" />
       <button id="btnSaveScript" class="secondary block">Save Script URL</button>
       <button id="btnOpenInBrowser" class="ghost block">🌐 Test URL in Browser</button>
-      <label class="checkrow"><input type="checkbox" id="autoSync" checked /><span>Auto-sync every change</span></label>
+      <label class="checkrow">
+        <input type="checkbox" id="autoSync" checked />
+        <span>Auto-sync all changes to Drive</span>
+      </label>
       <div class="divider"></div>
-      <button id="btnSync" class="block">☁️ Sync to Drive</button>
-      <button id="btnImport" class="secondary block">📥 Import from Drive</button>
-      <button id="btnDisconnect" class="ghost block">🔓 Clear Script URL</button>
+      <button id="btnSync" class="block">☁️ Sync to Google Drive</button>
+      <button id="btnImport" class="secondary block">📥 Import from Google Drive</button>
+      <button id="btnDisconnect" class="ghost block">🔓 Disconnect Script URL</button>
     </div>
 
+    <!-- Diagnostics Panel -->
     <div class="panel">
       <h3>🔍 Diagnostics</h3>
-      <button id="btnDiagnose" class="block">▶ Run Diagnostics</button>
+      <button id="btnDiagnose" class="secondary block">▶ Run Connectivity Test</button>
       <div class="diag-results" id="diagResults"></div>
-      <div class="hint" style="text-align:center;color:var(--text-sub)">— End of Settings —</div>
     </div>
-  </section>
 
-  <!-- ============ DATA ============ -->
-  <section id="tab-data" class="tab-panel">
+    <!-- Sync Status Summary -->
     <div class="panel">
-      <h3>Status</h3>
-      <div class="info-card"><span class="k">Bridge</span><span class="v" id="connState"><span class="pill off">Not set</span></span></div>
-      <div class="info-card"><span class="k">Target</span><span class="v">Saved address / saved_address.json</span></div>
+      <h3>Cloud Info</h3>
+      <div class="info-card"><span class="k">Target File</span><span class="v">Saved address / saved_address.json</span></div>
       <div class="info-card"><span class="k">Last Sync</span><span class="v" id="lastSyncTime">Never</span></div>
-      <div class="info-card" id="lastErrorCard" style="display:none;"><span class="k">Last Error</span><span class="v small" id="lastErrorText">—</span></div>
     </div>
 
+    <!-- Local Backup & Restore -->
     <div class="panel">
-      <h3>Local Storage</h3>
-      <div class="info-card"><span class="k">Saved Locally</span><span class="v" id="localCount">0 location(s)</span></div>
-    </div>
-
-    <div class="panel">
-      <h3>Export</h3>
+      <h3>Local Data Tools</h3>
       <button id="btnExportLocal" class="ghost block">⬇️ Export Local JSON</button>
-      <div class="hint">Downloads all your saved locations as a <code>.json</code> file you can keep as a backup.</div>
-    </div>
-
-    <div class="panel">
-      <h3>Danger Zone</h3>
+      <button id="btnImportLocalTrigger" class="secondary block">📁 Import JSON File</button>
+      <input type="file" id="localFileInput" accept=".json,application/json" style="display:none;" />
       <button id="btnClearLocal" class="danger block">🗑️ Clear All Local Data</button>
-      <div class="hint">Removes every location from this browser. Your Google Drive copy is <b>not</b> affected — you can always re-import it from Settings.</div>
-    </div>
-
-    <div class="panel" style="padding-top:8px;padding-bottom:24px;">
-      <div class="hint" style="text-align:center;color:var(--text-sub)">— End of Data —</div>
     </div>
   </section>
 </aside>
+
+<div class="modal-overlay" id="locationModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title" id="locModalTitle">Save Location</div>
+      <button class="modal-close" id="locModalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <label style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;">Place Title</label>
+      <input type="text" id="locModalInputTitle" placeholder="e.g. Favorite Coffee Shop" />
+
+      <label style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;">Category Tag</label>
+      <select id="locModalSelectTag">
+        <option value="fav">⭐ Favorite</option>
+        <option value="home">🏠 Home</option>
+        <option value="work">💼 Work</option>
+        <option value="travel">✈️ Travel</option>
+        <option value="place" selected>📍 Other Place</option>
+      </select>
+
+      <label style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;">Notes (Optional)</label>
+      <textarea id="locModalTextNotes" rows="2" placeholder="e.g. Free Wi-Fi, gate code 1234"></textarea>
+
+      <div style="font-size:11px;color:var(--text-sub);font-family:'JetBrains Mono',monospace;" id="locModalCoordsText">0.00000, 0.00000</div>
+    </div>
+    <div class="modal-footer">
+      <button class="secondary" id="locModalCancel">Cancel</button>
+      <button id="locModalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-card" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-title" id="confirmModalTitle">Are you sure?</div>
+      <button class="modal-close" id="confirmModalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmModalMsg" style="font-size:13px;color:var(--text-muted);line-height:1.5;">Do you want to proceed?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="secondary" id="confirmModalCancel">Cancel</button>
+      <button class="danger" id="confirmModalOk">Delete</button>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
 <script type="text/plain" id="appsScriptSource">
 const FOLDER_NAME = 'Saved address';
 const FILE_NAME   = 'saved_address.json';
+
 function doPost(e) { return handle(e); }
 function doGet(e)  { return handle(e); }
+
 function handle(e) {
   try {
     var action = null, body = {};
     if (e && e.parameter && e.parameter.action) {
       action = e.parameter.action;
-      if (e.parameter.payload) { try { body = JSON.parse(e.parameter.payload); } catch (_) { body = {}; } }
+      if (e.parameter.payload) {
+        try { body = JSON.parse(e.parameter.payload); } catch (_) { body = {}; }
+      }
     } else if (e && e.postData && e.postData.contents) {
-      try { var p = JSON.parse(e.postData.contents); action = p.action; body = p.payload || {}; } catch (_) {}
+      try {
+        var p = JSON.parse(e.postData.contents);
+        action = p.action;
+        body = p.payload || {};
+      } catch (_) {}
     }
+
     var result;
     switch (action) {
-      case 'ping': result = { ok: true, message: 'Connected to Drive bridge', version: 3 }; break;
-      case 'echo': result = { ok: true, echoed: body };                                     break;
-      case 'save': result = saveData(body);                                                 break;
-      case 'load': result = loadData();                                                     break;
-      default:     result = { ok: false, error: 'Unknown action: ' + action };
+      case 'ping':
+        result = { ok: true, message: 'Connected to Drive bridge', version: 3 };
+        break;
+      case 'echo':
+        result = { ok: true, echoed: body };
+        break;
+      case 'save':
+        result = saveData(body);
+        break;
+      case 'load':
+        result = loadData();
+        break;
+      default:
+        result = { ok: false, error: 'Unknown action: ' + action };
     }
     return out(result);
-  } catch (err) { return out({ ok: false, error: String(err && err.message ? err.message : err) }); }
+  } catch (err) {
+    return out({ ok: false, error: String(err && err.message ? err.message : err) });
+  }
 }
-function out(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+
+function out(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function saveData(payload) {
   var folder = getOrCreateFolder();
   var existing = folder.getFilesByName(FILE_NAME);
   var content = JSON.stringify(payload, null, 2);
-  if (existing.hasNext()) existing.next().setContent(content);
-  else folder.createFile(FILE_NAME, content, 'application/json');
-  return { ok: true, count: payload && payload.locations ? payload.locations.length : 0, savedAt: new Date().toISOString() };
+  if (existing.hasNext()) {
+    existing.next().setContent(content);
+  } else {
+    folder.createFile(FILE_NAME, content, 'application/json');
+  }
+  return {
+    ok: true,
+    count: payload && payload.locations ? payload.locations.length : 0,
+    savedAt: new Date().toISOString()
+  };
 }
+
 function loadData() {
   var folder = getOrCreateFolder();
   var existing = folder.getFilesByName(FILE_NAME);
-  if (!existing.hasNext()) return { ok: true, found: false, data: null };
+  if (!existing.hasNext()) {
+    return { ok: true, found: false, data: null };
+  }
   var f = existing.next();
-  return { ok: true, found: true, data: JSON.parse(f.getBlob().getDataAsString()) };
+  return {
+    ok: true,
+    found: true,
+    data: JSON.parse(f.getBlob().getDataAsString())
+  };
 }
+
 function getOrCreateFolder() {
   var it = DriveApp.getFoldersByName(FOLDER_NAME);
   return it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
@@ -437,121 +1550,400 @@ function getOrCreateFolder() {
 <script>
 (function(){
 'use strict';
-var CONFIG = { FILE:'saved_address.json', LS_DATA:'mlt_locations_cache', LS_GMAIL:'mlt_gmail', LS_AUTO:'mlt_autosync', LS_SYNC:'mlt_last_sync', LS_URL:'mlt_script_url', LS_ERR:'mlt_last_error', LS_DEPLOY_OPEN:'mlt_deploy_open' };
-var state = { locations:[], gmail:'', autoSync:true, lastSync:null, lastError:null, scriptUrl:'', dirty:false, busy:false, markers:new Map(), tempLatLng:null, tempMarker:null, repositioning:null, searchMarker:null };
-var map = null, searchTimer = null, searchAbort = null, searchPinIcon = null;
+
+var CONFIG = {
+  LS_DATA: 'mlt_locations_v3',
+  LS_GMAIL: 'mlt_gmail',
+  LS_AUTO: 'mlt_autosync',
+  LS_SYNC: 'mlt_last_sync',
+  LS_URL: 'mlt_script_url',
+  LS_GUIDE_OPEN: 'mlt_guide_open'
+};
+
+var state = {
+  locations: [],
+  gmail: '',
+  scriptUrl: '',
+  autoSync: true,
+  lastSync: null,
+  dirty: false,
+  busy: false,
+  changeVersion: 0,
+  pushingVersion: -1,
+  syncPendingAfterBusy: false,
+  userPos: null,
+  activeFilter: '',
+  activeSort: 'newest',
+  activeCategoryTag: null,
+  repositioning: null,
+  tempLatLng: null,
+  tempMarker: null,
+  searchMarker: null,
+  categoryMarkers: [],
+  markers: new Map(),
+  gpsAccuracyCircle: null
+};
+
+var map = null;
+var tileLayers = {};
+var currentTileLayer = 'traffic';
+var searchTimer = null;
+var searchAbort = null;
+var selectedSearchIdx = -1;
 
 function $(s){ return document.querySelector(s); }
+function $$(s){ return document.querySelectorAll(s); }
+
 function toast(msg, ms){
   ms = ms || 2600;
-  var t = $('#toast'); if(!t) return;
-  t.textContent = msg; t.classList.add('show');
+  var t = $('#toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
   clearTimeout(toast._t);
   toast._t = setTimeout(function(){ t.classList.remove('show'); }, ms);
 }
-function esc(str){ return String(str).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
-function uid(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9); }
-function fmtCoord(n){ return Number(n).toFixed(5); }
-function fmtTime(iso){
-  if(!iso) return 'Never';
-  var d = new Date(iso); if(isNaN(d)) return 'Never';
-  var s = (Date.now()-d.getTime())/1000;
-  if(s<60) return 'Just now';
-  if(s<3600) return Math.floor(s/60)+' min ago';
-  if(s<86400) return Math.floor(s/3600)+' hr ago';
-  return d.toLocaleDateString();
-}
-function setLastError(msg){
-  state.lastError = msg || null;
-  var card = $('#lastErrorCard'), txt = $('#lastErrorText');
-  if(!card || !txt) return;
-  if(state.lastError){ localStorage.setItem(CONFIG.LS_ERR, state.lastError); card.style.display='flex'; txt.textContent = state.lastError; }
-  else { localStorage.removeItem(CONFIG.LS_ERR); card.style.display='none'; }
-}
-function dirUrl(loc){ return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(loc.lat+','+loc.lng)+'&travelmode=driving'; }
-function viewUrl(loc){ return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(loc.lat+','+loc.lng); }
-function findLoc(id){ for(var i=0;i<state.locations.length;i++){ if(state.locations[i].id===id) return state.locations[i]; } return null; }
 
-function fitPanels(){
-  var st = document.getElementById('statusBar');
-  var tb = document.getElementById('tabs');
-  if(!st || !tb) return;
-  var headerH = st.offsetHeight + tb.offsetHeight;
-  document.documentElement.style.setProperty('--header-h', headerH + 'px');
-}
-
-function loadAppsScriptPreset(){
-  var src = document.getElementById('appsScriptSource'), out = document.getElementById('appsScriptCode');
-  if(!src || !out) return;
-  out.textContent = src.textContent.replace(/^\n/,'').replace(/\s+$/,'');
-}
-function initCopyButton(){
-  var btn = document.getElementById('btnCopyAppsScript'); if(!btn) return;
-  btn.addEventListener('click', function(){
-    var code = document.getElementById('appsScriptCode').textContent;
-    function done(){ btn.classList.add('copied'); btn.textContent='✅ Copied!'; toast('Apps Script code copied'); setTimeout(function(){ btn.classList.remove('copied'); btn.textContent='📋 Copy code'; }, 2000); }
-    function fallback(){ var ta=document.createElement('textarea'); ta.value=code; ta.setAttribute('readonly',''); ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); } catch(e){ toast('Copy failed'); } document.body.removeChild(ta); }
-    if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(code).then(done).catch(fallback); } else fallback();
+function esc(str){
+  return String(str || '').replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
   });
 }
-function initCodeToggle(){
-  var t = document.getElementById('codeToggle'), b = document.getElementById('codeBody'); if(!t||!b) return;
-  t.addEventListener('click', function(){ var open = b.classList.toggle('open'); t.classList.toggle('open', open); setTimeout(fitPanels, 60); });
+
+function uid(){
+  return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'loc-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 }
-function initDeployCollapsible(){
-  var p = document.getElementById('deployPanel'), h = document.getElementById('deployHeader'); if(!p||!h) return;
-  if(localStorage.getItem(CONFIG.LS_DEPLOY_OPEN)==='true') p.classList.add('open');
-  h.addEventListener('click', function(){ var open = p.classList.toggle('open'); localStorage.setItem(CONFIG.LS_DEPLOY_OPEN, String(open)); setTimeout(fitPanels, 60); });
+
+function fmtCoord(n){
+  return Number(n).toFixed(5);
 }
+
+function calcDistanceKm(lat1, lon1, lat2, lon2){
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function formatDist(km){
+  if(km < 1) return Math.round(km * 1000) + ' m';
+  return km.toFixed(1) + ' km';
+}
+
 function loadLocal(){
-  try { state.locations = JSON.parse(localStorage.getItem(CONFIG.LS_DATA)||'[]'); if(!Array.isArray(state.locations)) state.locations=[]; } catch(e){ state.locations=[]; }
-  state.gmail = localStorage.getItem(CONFIG.LS_GMAIL)||'';
-  state.autoSync = localStorage.getItem(CONFIG.LS_AUTO)!=='false';
-  state.lastSync = localStorage.getItem(CONFIG.LS_SYNC)||null;
-  state.lastError = localStorage.getItem(CONFIG.LS_ERR)||null;
-  state.scriptUrl = localStorage.getItem(CONFIG.LS_URL)||'';
+  try {
+    state.locations = JSON.parse(localStorage.getItem(CONFIG.LS_DATA) || '[]');
+    if(!Array.isArray(state.locations)) state.locations = [];
+  } catch(e){
+    state.locations = [];
+  }
+  state.gmail = localStorage.getItem(CONFIG.LS_GMAIL) || '';
+  state.autoSync = localStorage.getItem(CONFIG.LS_AUTO) !== 'false';
+  state.lastSync = localStorage.getItem(CONFIG.LS_SYNC) || null;
+  state.scriptUrl = localStorage.getItem(CONFIG.LS_URL) || '';
 }
-function saveLocal(){ localStorage.setItem(CONFIG.LS_DATA, JSON.stringify(state.locations)); }
+
+function saveLocal(){
+  localStorage.setItem(CONFIG.LS_DATA, JSON.stringify(state.locations));
+}
+
+function commit(msg){
+  state.changeVersion++;
+  saveLocal();
+  renderList();
+  refreshMarkers();
+  state.dirty = true;
+  updateStatus();
+  if(msg) toast(msg);
+
+  if(state.scriptUrl && state.autoSync){
+    scheduleAutoPush();
+  }
+}
+
+var autoPushTimer = null;
+function scheduleAutoPush(){
+  clearTimeout(autoPushTimer);
+  autoPushTimer = setTimeout(function(){ pushToDrive(true); }, 500);
+}
+
+function updateStatus(){
+  var dot = $('#statusDot'), txt = $('#statusText');
+  var conn = $('#connState'), syncTime = $('#lastSyncTime');
+  if(!dot || !txt) return;
+
+  dot.className = 'dot';
+  if(state.busy){
+    dot.classList.add('busy');
+    txt.textContent = 'Syncing edits to Drive…';
+  } else if(!state.scriptUrl){
+    txt.textContent = 'Cloud unconfigured';
+  } else if(state.dirty){
+    dot.classList.add('dirty');
+    txt.textContent = 'Pending sync…';
+  } else {
+    dot.classList.add('on');
+    txt.textContent = 'Synced with Drive';
+  }
+
+  if(conn){
+    if(state.busy) conn.innerHTML = '<span class="pill warn">Syncing</span>';
+    else if(state.scriptUrl) conn.innerHTML = '<span class="pill ok">Connected</span>';
+    else conn.innerHTML = '<span class="pill off">Disabled</span>';
+  }
+
+  if(syncTime && state.lastSync){
+    var d = new Date(state.lastSync);
+    syncTime.textContent = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) + ' (' + d.toLocaleDateString() + ')';
+  }
+}
+
+function callBridge(action, payload){
+  if(!state.scriptUrl) return Promise.reject(new Error('Script URL is empty'));
+  var params = new URLSearchParams();
+  params.append('action', action);
+  if(payload !== undefined) params.append('payload', JSON.stringify(payload));
+
+  return fetch(state.scriptUrl, { method:'POST', body:params })
+    .then(function(res){
+      if(!res.ok) throw new Error('HTTP status ' + res.status);
+      return res.text();
+    })
+    .then(function(raw){
+      try {
+        var data = JSON.parse(raw);
+        if(data.ok === false) throw new Error(data.error || 'Server error');
+        return data;
+      } catch(parseErr){
+        if(/accounts\.google\.com/i.test(raw)) {
+          throw new Error('Script permission issue: ensure "Who has access" is set to "Anyone".');
+        }
+        throw new Error('Invalid JSON response: ' + raw.slice(0, 100));
+      }
+    });
+}
+
+function pushToDrive(silent){
+  if(!state.scriptUrl) return Promise.resolve();
+
+  if(state.busy){
+    state.syncPendingAfterBusy = true;
+    return Promise.resolve();
+  }
+
+  state.busy = true;
+  var versionAtPush = state.changeVersion;
+  updateStatus();
+
+  var payload = {
+    app: 'MyLocationTracker',
+    version: 3,
+    gmail: state.gmail || null,
+    updatedAt: new Date().toISOString(),
+    locations: state.locations
+  };
+
+  return callBridge('save', payload)
+    .then(function(res){
+      if(state.changeVersion === versionAtPush){
+        state.dirty = false;
+      }
+      state.lastSync = new Date().toISOString();
+      localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
+      if(!silent) toast('☁️ Synced ' + state.locations.length + ' pins to Drive');
+    })
+    .catch(function(err){
+      state.dirty = true;
+      if(!silent) toast('Sync failed: ' + err.message);
+    })
+    .finally(function(){
+      state.busy = false;
+      updateStatus();
+
+      if(state.syncPendingAfterBusy || state.changeVersion > versionAtPush){
+        state.syncPendingAfterBusy = false;
+        scheduleAutoPush();
+      }
+    });
+}
+
+function pullFromDrive(){
+  if(!state.scriptUrl) return toast('Please save your Web App URL first');
+  state.busy = true;
+  updateStatus();
+
+  callBridge('load')
+    .then(function(res){
+      if(!res.found || !res.data){
+        toast('No saved file found in Drive yet');
+        return;
+      }
+      var remote = res.data.locations || [];
+      if(!Array.isArray(remote)){
+        toast('Remote file format unreadable');
+        return;
+      }
+
+      var mapExisting = new Map(state.locations.map(function(l){ return [l.id, l]; }));
+      var added = 0, updated = 0;
+
+      remote.forEach(function(r){
+        if(!r || !r.id || typeof r.lat !== 'number' || typeof r.lng !== 'number') return;
+        var cur = mapExisting.get(r.id);
+        if(!cur){
+          mapExisting.set(r.id, r);
+          added++;
+        } else {
+          var tRemote = new Date(r.updatedAt || 0).getTime();
+          var tCur = new Date(cur.updatedAt || 0).getTime();
+          if(tRemote > tCur){
+            mapExisting.set(r.id, r);
+            updated++;
+          }
+        }
+      });
+
+      state.locations = Array.from(mapExisting.values());
+      if(res.data.gmail && !state.gmail){
+        state.gmail = res.data.gmail;
+        localStorage.setItem(CONFIG.LS_GMAIL, state.gmail);
+        $('#gmailInput').value = state.gmail;
+      }
+
+      state.dirty = false;
+      state.lastSync = new Date().toISOString();
+      localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
+      saveLocal();
+      renderList();
+      refreshMarkers();
+      toast('📥 Imported ' + added + ' new, ' + updated + ' updated from Drive');
+    })
+    .catch(function(err){
+      toast('Import failed: ' + err.message);
+    })
+    .finally(function(){
+      state.busy = false;
+      updateStatus();
+    });
+}
+
+function createSvgPin(tag, selected){
+  var colors = {
+    fav: '#f59e0b',
+    home: '#1a73e8',
+    work: '#0284c7',
+    travel: '#10b981',
+    place: '#ea4335'
+  };
+  var fill = colors[tag] || '#1a73e8';
+  var stroke = selected ? '#ffffff' : 'rgba(0,0,0,0.25)';
+  var scale = selected ? '1.18' : '1';
+
+  var svg = '<svg width="32" height="38" viewBox="0 0 32 38" fill="none" style="transform:scale('+scale+');filter:drop-shadow(0 3px 6px rgba(0,0,0,0.3));">' +
+    '<path d="M16 0C7.16 0 0 7.16 0 16C0 26.2 13.8 36.8 15.1 37.8C15.6 38.1 16.4 38.1 16.9 37.8C18.2 36.8 32 26.2 32 16C32 7.16 24.84 0 16 0Z" fill="'+fill+'"/>' +
+    '<circle cx="16" cy="16" r="6.5" fill="#ffffff" stroke="'+stroke+'" stroke-width="1.5"/>' +
+  '</svg>';
+
+  return L.divIcon({
+    className: 'custom-svg-pin',
+    html: svg,
+    iconSize: [32, 38],
+    iconAnchor: [16, 38],
+    popupAnchor: [0, -34]
+  });
+}
 
 function initMap(){
-  map = L.map('map', { zoomControl:false }).setView([20,78], 4);
-  L.control.zoom({ position:'bottomright' }).addTo(map);
-  L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom:21, subdomains:['mt0','mt1','mt2','mt3'], attribution:'© Google' }).addTo(map);
-  map.on('click', function(e){ if(state.repositioning) setRepositionMarker(e.latlng); });
-  refreshMarkers(); initLongPress();
+  // 1. Google Maps Classic with Real-Time Live Traffic Layer (DEFAULT)
+  tileLayers.traffic = L.tileLayer('https://{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}', {
+    maxZoom: 21,
+    subdomains: ['mt0','mt1','mt2','mt3'],
+    attribution: '© Google Maps (Live Traffic)'
+  });
+
+  // 2. Google Maps Classic Standard Roadmap
+  tileLayers.classic = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    maxZoom: 21,
+    subdomains: ['mt0','mt1','mt2','mt3'],
+    attribution: '© Google Maps'
+  });
+
+  // 3. Google Maps Satellite Hybrid (Photographic + Road Overlays)
+  tileLayers.satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    maxZoom: 21,
+    subdomains: ['mt0','mt1','mt2','mt3'],
+    attribution: '© Google Satellite'
+  });
+
+  map = L.map('map', {
+    zoomControl: false,
+    layers: [tileLayers.traffic]
+  }).setView([20.5937, 78.9629], 5);
+
+  currentTileLayer = 'traffic';
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  map.on('click', function(e){
+    if(state.repositioning){
+      setRepositionMarker(e.latlng);
+    }
+  });
+
+  initLongPress();
+  refreshMarkers();
 }
-function popupHtml(loc){
-  return '<b style="font-size:14px">'+esc(loc.title)+'</b><br>'+
-    '<span style="font-size:11px;color:#64748b">'+fmtCoord(loc.lat)+', '+fmtCoord(loc.lng)+'</span>'+
-    '<div style="display:flex;gap:12px;margin-top:10px">'+
-      '<a href="'+dirUrl(loc)+'" target="_blank" rel="noopener" style="color:#fff;background:#4f46e5;font-size:12px;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:6px">🧭 Directions</a>'+
-      '<a href="'+viewUrl(loc)+'" target="_blank" rel="noopener" style="color:#4f46e5;font-size:12px;text-decoration:none;font-weight:600">📍 View</a>'+
-    '</div>';
-}
+
 function refreshMarkers(){
   if(!map) return;
   state.markers.forEach(function(m){ map.removeLayer(m); });
   state.markers.clear();
+
   state.locations.forEach(function(loc){
-    var m = L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(popupHtml(loc));
+    var icon = createSvgPin(loc.tag || 'place', false);
+    var m = L.marker([loc.lat, loc.lng], { icon: icon }).addTo(map);
+
+    var dirLink = 'https://www.google.com/maps/dir/?api=1&destination=' + loc.lat + ',' + loc.lng;
+    var popupContent = '<div class="gmap-popup-card">' +
+      '<div class="gmap-popup-title">' + esc(loc.title) + '</div>' +
+      (loc.notes ? '<div class="gmap-popup-addr">' + esc(loc.notes) + '</div>' : '') +
+      '<div class="gmap-popup-coords">' + fmtCoord(loc.lat) + ', ' + fmtCoord(loc.lng) + '</div>' +
+      '<div class="gmap-popup-btns">' +
+        '<button class="gmap-btn gmap-btn-save" onclick="window._editLocFromPopup(\'' + loc.id + '\')">✏️ Edit</button>' +
+        '<a href="' + dirLink + '" target="_blank" rel="noopener" class="gmap-btn gmap-btn-dir">🧭 Directions</a>' +
+      '</div>' +
+    '</div>';
+
+    m.bindPopup(popupContent);
     m.locationId = loc.id;
     state.markers.set(loc.id, m);
   });
 }
-function flyTo(id){
-  var loc = findLoc(id), m = state.markers.get(id);
-  if(!loc) return;
-  map.setView([loc.lat, loc.lng], 16, { animate:true });
-  if(m) m.openPopup();
-}
 
-var LP_DURATION=3000, LP_RADIUS=26, LP_CIRCUM=2*Math.PI*LP_RADIUS;
-var lpTimer=null, lpRaf=null, lpIndicator=null, lpStartClient=null;
+window._editLocFromPopup = function(id){
+  var loc = state.locations.find(function(l){ return l.id === id; });
+  if(!loc) return;
+  openLocationModal(loc, function(updated){
+    loc.title = updated.title;
+    loc.tag = updated.tag;
+    loc.notes = updated.notes;
+    loc.updatedAt = new Date().toISOString();
+    commit('Updated "' + loc.title + '"');
+  });
+};
+
+var LP_DURATION = 3000, LP_RADIUS = 26, LP_CIRCUM = 2 * Math.PI * LP_RADIUS;
+var lpTimer = null, lpRaf = null, lpIndicator = null, lpStartClient = null;
+
 function initLongPress(){
   var el = map.getContainer();
   el.addEventListener('pointerdown', function(e){
     if(e.button !== undefined && e.button !== 0) return;
-    if(e.target.closest('.leaflet-control')) return;
+    if(e.target.closest('.leaflet-control') || e.target.closest('#searchBar') || e.target.closest('.layer-menu')) return;
     startLongPress(map.mouseEventToLatLng(e), e.clientX, e.clientY);
   });
   el.addEventListener('pointerup', endLongPress);
@@ -559,458 +1951,1265 @@ function initLongPress(){
   el.addEventListener('pointerleave', endLongPress);
   el.addEventListener('pointermove', function(e){
     if(!lpStartClient) return;
-    if(Math.hypot(e.clientX-lpStartClient.x, e.clientY-lpStartClient.y) > 12) endLongPress();
+    if(Math.hypot(e.clientX - lpStartClient.x, e.clientY - lpStartClient.y) > 14){
+      endLongPress();
+    }
   });
 }
+
 function startLongPress(latlng, cx, cy){
   endLongPress();
-  lpStartClient = { x:cx, y:cy };
+  lpStartClient = { x: cx, y: cy };
   lpIndicator = document.createElement('div');
   lpIndicator.className = 'long-press-indicator';
-  lpIndicator.style.left = cx + 'px'; lpIndicator.style.top = cy + 'px';
-  lpIndicator.innerHTML = '<svg viewBox="0 0 64 64" width="64" height="64">'+
-    '<circle cx="32" cy="32" r="'+LP_RADIUS+'" fill="rgba(79,70,229,0.14)"/>'+
-    '<circle class="lp-ring" cx="32" cy="32" r="'+LP_RADIUS+'" fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="'+LP_CIRCUM.toFixed(2)+'" stroke-dashoffset="'+LP_CIRCUM.toFixed(2)+'" transform="rotate(-90 32 32)"/>'+
-    '<circle cx="32" cy="32" r="4" fill="#4f46e5"/></svg>';
+  lpIndicator.style.left = cx + 'px';
+  lpIndicator.style.top = cy + 'px';
+  lpIndicator.innerHTML = '<svg viewBox="0 0 64 64" width="64" height="64">' +
+    '<circle cx="32" cy="32" r="'+LP_RADIUS+'" fill="rgba(26,115,232,0.18)"/>' +
+    '<circle class="lp-ring" cx="32" cy="32" r="'+LP_RADIUS+'" fill="none" stroke="#1a73e8" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="'+LP_CIRCUM.toFixed(2)+'" stroke-dashoffset="'+LP_CIRCUM.toFixed(2)+'" transform="rotate(-90 32 32)"/>' +
+    '<circle cx="32" cy="32" r="4.5" fill="#1a73e8"/>' +
+  '</svg>';
   document.body.appendChild(lpIndicator);
-  var ring = lpIndicator.querySelector('.lp-ring'), t0 = performance.now();
+
+  var ring = lpIndicator.querySelector('.lp-ring');
+  var t0 = performance.now();
   (function frame(){
-    var pct = Math.min((performance.now()-t0)/LP_DURATION, 1);
-    ring.style.strokeDashoffset = (LP_CIRCUM*(1-pct)).toFixed(2);
-    if(pct<1) lpRaf = requestAnimationFrame(frame);
+    var pct = Math.min((performance.now() - t0) / LP_DURATION, 1);
+    ring.style.strokeDashoffset = (LP_CIRCUM * (1 - pct)).toFixed(2);
+    if(pct < 1) lpRaf = requestAnimationFrame(frame);
   })();
+
   lpTimer = setTimeout(function(){ finishLongPress(latlng); }, LP_DURATION);
 }
+
 function endLongPress(){
-  if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; }
-  if(lpRaf){ cancelAnimationFrame(lpRaf); lpRaf=null; }
+  if(lpTimer){ clearTimeout(lpTimer); lpTimer = null; }
+  if(lpRaf){ cancelAnimationFrame(lpRaf); lpRaf = null; }
   if(lpIndicator && lpIndicator.parentNode) lpIndicator.parentNode.removeChild(lpIndicator);
-  lpIndicator=null; lpStartClient=null;
+  lpIndicator = null;
+  lpStartClient = null;
 }
+
 function finishLongPress(latlng){
   var wasRepos = !!state.repositioning;
   endLongPress();
-  if(navigator.vibrate){ try{ navigator.vibrate(30); }catch(e){} }
-  if(wasRepos){ setRepositionMarker(latlng); toast('New position set — tap Save'); return; }
-  state.tempLatLng = { lat:latlng.lat, lng:latlng.lng };
-  if(state.tempMarker) map.removeLayer(state.tempMarker);
-  state.tempMarker = L.marker([latlng.lat, latlng.lng], { draggable:true }).addTo(map).bindPopup('Pinned here — drag to fine-tune').openPopup();
-  state.tempMarker.on('dragend', function(ev){ var p=ev.target.getLatLng(); state.tempLatLng={lat:p.lat,lng:p.lng}; });
+  if(navigator.vibrate){ try { navigator.vibrate(40); } catch(e){} }
+  if(wasRepos){
+    setRepositionMarker(latlng);
+    toast('Position moved — click Save');
+    return;
+  }
+
+  setTempMarker(latlng, 'Dropped Pin');
+  reverseGeocode(latlng.lat, latlng.lng, function(addr){
+    openLocationModal({
+      title: addr || 'Dropped Pin',
+      notes: '',
+      tag: 'place',
+      lat: latlng.lat,
+      lng: latlng.lng
+    }, function(res){
+      var now = new Date().toISOString();
+      state.locations.push({
+        id: uid(),
+        title: res.title,
+        tag: res.tag,
+        notes: res.notes,
+        lat: latlng.lat,
+        lng: latlng.lng,
+        createdAt: now,
+        updatedAt: now
+      });
+      clearTempMarker();
+      commit('Saved "' + res.title + '"');
+    });
+  });
+}
+
+function setTempMarker(latlng, popupTitle){
+  clearTempMarker();
+  state.tempLatLng = { lat: latlng.lat, lng: latlng.lng };
+  state.tempMarker = L.marker([latlng.lat, latlng.lng], { draggable: true }).addTo(map)
+    .bindPopup('<b>' + esc(popupTitle || 'New Location') + '</b><br>Drag to fine-tune')
+    .openPopup();
+
+  state.tempMarker.on('dragend', function(ev){
+    var p = ev.target.getLatLng();
+    state.tempLatLng = { lat: p.lat, lng: p.lng };
+  });
+
   $('#btnSaveCurrent').disabled = false;
-  var lt = document.querySelector('.tab-btn[data-tab="locations"]');
-  if(lt && !lt.classList.contains('active')) lt.click();
-  toast('📍 Pinned — tap "Save This Location"');
+}
+
+function clearTempMarker(){
+  if(state.tempMarker){
+    map.removeLayer(state.tempMarker);
+    state.tempMarker = null;
+  }
+  state.tempLatLng = null;
+  $('#btnSaveCurrent').disabled = true;
 }
 
 function enterRepositionMode(id){
-  var loc = findLoc(id), marker = state.markers.get(id);
+  var loc = state.locations.find(function(l){ return l.id === id; });
+  var marker = state.markers.get(id);
   if(!loc || !marker) return;
+
   if(state.repositioning) exitRepositionMode();
-  state.repositioning = { id:id, originalLat:loc.lat, originalLng:loc.lng, newLat:loc.lat, newLng:loc.lng };
-  if(marker.dragging) marker.dragging.enable();
+
+  state.repositioning = {
+    id: id,
+    origLat: loc.lat,
+    origLng: loc.lng,
+    newLat: loc.lat,
+    newLng: loc.lng
+  };
+
   marker.closePopup();
-  var el = marker.getElement && marker.getElement(); if(el) el.classList.add('repositioning');
-  marker.on('dragend', onRepositionDrag);
-  map.setView([loc.lat, loc.lng], Math.max(map.getZoom(), 15), { animate:true });
-  map.getContainer().style.cursor = 'crosshair';
-  document.getElementById('repositionTitle').textContent = loc.title;
-  var bar = document.getElementById('repositionBar'); bar.hidden = false; bar.classList.add('show');
-  render();
-  toast('Tap the map or drag marker to set new position');
+  if(marker.dragging) marker.dragging.enable();
+  marker.on('dragend', function(ev){
+    var p = ev.target.getLatLng();
+    state.repositioning.newLat = p.lat;
+    state.repositioning.newLng = p.lng;
+  });
+
+  map.setView([loc.lat, loc.lng], Math.max(map.getZoom(), 16), { animate: true });
+  $('#repositionTitle').textContent = loc.title;
+  var bar = $('#repositionBar');
+  bar.classList.add('show');
+  toast('Drag marker or tap map to set new position');
 }
-function onRepositionDrag(e){ if(!state.repositioning) return; var p=e.target.getLatLng(); state.repositioning.newLat=p.lat; state.repositioning.newLng=p.lng; }
+
 function setRepositionMarker(latlng){
   if(!state.repositioning) return;
-  state.repositioning.newLat = latlng.lat; state.repositioning.newLng = latlng.lng;
+  state.repositioning.newLat = latlng.lat;
+  state.repositioning.newLng = latlng.lng;
   var marker = state.markers.get(state.repositioning.id);
-  if(marker){ marker.setLatLng(latlng); marker.openPopup(); setTimeout(function(){ marker.closePopup(); }, 900); }
+  if(marker) marker.setLatLng(latlng);
 }
+
 function saveReposition(){
   if(!state.repositioning) return;
-  var id = state.repositioning.id, nlat = state.repositioning.newLat, nlng = state.repositioning.newLng;
-  var loc = findLoc(id); if(!loc){ exitRepositionMode(); return; }
-  loc.lat = nlat; loc.lng = nlng; loc.updatedAt = new Date().toISOString();
-  exitRepositionMode(true); commit('Location moved — syncing');
+  var loc = state.locations.find(function(l){ return l.id === state.repositioning.id; });
+  if(loc){
+    loc.lat = state.repositioning.newLat;
+    loc.lng = state.repositioning.newLng;
+    loc.updatedAt = new Date().toISOString();
+    exitRepositionMode();
+    commit('Repositioned "' + loc.title + '"');
+  } else {
+    exitRepositionMode();
+  }
 }
+
 function cancelReposition(){
   if(!state.repositioning) return;
-  var id = state.repositioning.id, lat = state.repositioning.originalLat, lng = state.repositioning.originalLng;
-  var marker = state.markers.get(id); if(marker) marker.setLatLng([lat, lng]);
-  exitRepositionMode(); toast('Reposition cancelled');
+  var loc = state.locations.find(function(l){ return l.id === state.repositioning.id; });
+  var marker = state.markers.get(state.repositioning.id);
+  if(loc && marker){
+    marker.setLatLng([loc.lat, loc.lng]);
+  }
+  exitRepositionMode();
+  toast('Reposition cancelled');
 }
-function exitRepositionMode(silent){
+
+function exitRepositionMode(){
   if(!state.repositioning) return;
-  var id = state.repositioning.id, marker = state.markers.get(id);
-  if(marker){ marker.off('dragend', onRepositionDrag); if(marker.dragging) marker.dragging.disable(); var el = marker.getElement && marker.getElement(); if(el) el.classList.remove('repositioning'); }
+  var marker = state.markers.get(state.repositioning.id);
+  if(marker && marker.dragging) marker.dragging.disable();
   state.repositioning = null;
-  var bar = document.getElementById('repositionBar');
-  if(bar){ bar.classList.remove('show'); setTimeout(function(){ bar.hidden = true; }, 350); }
-  map.getContainer().style.cursor = '';
-  if(!silent) render();
+  $('#repositionBar').classList.remove('show');
+}
+
+function getSearchResultIcon(item){
+  var type = (item.type || '').toLowerCase();
+  var cls = (item.class || '').toLowerCase();
+  if(cls === 'amenity'){
+    if(type === 'cafe' || type === 'coffee') return '☕';
+    if(type === 'restaurant' || type === 'fast_food') return '🍽️';
+    if(type === 'fuel') return '⛽';
+    if(type === 'hospital' || type === 'pharmacy') return '🏥';
+    if(type === 'bank' || type === 'atm') return '🏦';
+    return '🏪';
+  }
+  if(cls === 'tourism' || type === 'hotel') return '🏨';
+  if(cls === 'shop') return '🛒';
+  if(cls === 'highway' || type === 'road') return '🛣️';
+  if(type === 'city' || type === 'town' || type === 'village' || type === 'administrative') return '🏙️';
+  if(item.type === 'coordinate') return '🎯';
+  return '📍';
+}
+
+function clearCategoryMarkers(){
+  if(state.categoryMarkers && state.categoryMarkers.length){
+    state.categoryMarkers.forEach(function(m){
+      if(map) map.removeLayer(m);
+    });
+  }
+  state.categoryMarkers = [];
 }
 
 function initSearch(){
-  searchPinIcon = L.divIcon({ className:'search-pin', html:'<svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="#fef3c7"/><circle cx="12" cy="10" r="3.2" fill="#f59e0b" stroke="none"/></svg>', iconSize:[38,38], iconAnchor:[19,36], popupAnchor:[0,-32] });
-  var input = document.getElementById('searchInput'), clear = document.getElementById('searchClear'), results = document.getElementById('searchResults');
-  input.addEventListener('input', function(){
-    var v = input.value.trim(); clear.hidden = !v;
+  var input = $('#searchInput'),
+      clear = $('#searchClear'),
+      results = $('#searchResults'),
+      spinner = $('#searchSpinner'),
+      submitBtn = $('#searchSubmitBtn'),
+      chipsWrap = $('#searchChips');
+
+  function updateSearchInputState(){
+    var q = input.value.trim();
+    clear.style.display = q ? 'inline-flex' : 'none';
+    selectedSearchIdx = -1;
     clearTimeout(searchTimer);
-    if(v.length < 3){ hideSearchResults(); return; }
-    searchTimer = setTimeout(function(){ performSearch(v); }, 550);
-  });
-  input.addEventListener('keydown', function(e){
-    if(e.key === 'Escape'){ input.blur(); hideSearchResults(); }
-    if(e.key === 'Enter'){ e.preventDefault(); var f = results.querySelector('.search-result'); if(f) f.click(); }
-  });
-  clear.addEventListener('click', function(){ input.value=''; clear.hidden=true; hideSearchResults(); clearSearchMarker(); input.focus(); });
-  document.addEventListener('click', function(e){ if(!e.target.closest('#searchBar')) hideSearchResults(); });
-  results.addEventListener('click', function(e){
-    var row = e.target.closest('.search-result'); if(!row) return;
-    var list = results._results || [], r = list[+row.dataset.idx];
-    if(r) goToSearchResult(r);
-  });
-}
-function performSearch(q){
-  if(searchAbort) searchAbort.abort();
-  searchAbort = new AbortController();
-  showSearchMessage('Searching…');
-  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=0&q='+encodeURIComponent(q);
-  fetch(url, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } })
-    .then(function(res){ if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
-    .then(function(data){ renderSearchResults(data, q); })
-    .catch(function(err){ if(err.name === 'AbortError') return; showSearchMessage('Search unavailable — check your connection.'); });
-}
-function showSearchMessage(msg){ var r = document.getElementById('searchResults'); r.innerHTML = '<div class="search-empty">'+esc(msg)+'</div>'; r.hidden = false; }
-function renderSearchResults(results, query){
-  var el = document.getElementById('searchResults');
-  if(!results.length){ el.innerHTML = '<div class="search-empty">No results for <b>'+esc(query)+'</b></div>'; el.hidden=false; return; }
-  el.innerHTML = results.map(function(r, i){
-    var parts = (r.display_name||'').split(',').map(function(s){ return s.trim(); });
-    var name = r.name || parts[0] || 'Unnamed', rest = parts.slice(1).join(', ') || '—';
-    return '<div class="search-result" data-idx="'+i+'"><div>📍</div><div class="sr-body"><div class="sr-name">'+esc(name)+'</div><div class="sr-addr">'+esc(rest)+'</div></div></div>';
-  }).join('');
-  el._results = results; el.hidden = false;
-}
-function goToSearchResult(r){
-  var lat = parseFloat(r.lat), lng = parseFloat(r.lon);
-  if(isNaN(lat) || isNaN(lng)) return;
-  clearSearchMarker();
-  var name = r.name || (r.display_name||'').split(',')[0];
-  state.searchMarker = L.marker([lat, lng], { icon:searchPinIcon }).addTo(map)
-    .bindPopup('<b style="font-size:14px">'+esc(name)+'</b><br><span style="font-size:11px;color:#64748b">'+esc(r.display_name||'')+'</span><br><a href="https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'" target="_blank" rel="noopener" style="color:#fff;background:#4f46e5;font-size:12px;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:6px;display:inline-block;margin-top:8px">🧭 Directions</a>')
-    .openPopup();
-  map.setView([lat, lng], 15, { animate:true });
-  var input = document.getElementById('searchInput');
-  input.value = name;
-  document.getElementById('searchClear').hidden = false;
-  hideSearchResults(); input.blur();
-}
-function hideSearchResults(){ var el = document.getElementById('searchResults'); el.hidden = true; el._results = null; }
-function clearSearchMarker(){ if(state.searchMarker){ map.removeLayer(state.searchMarker); state.searchMarker = null; } }
 
-function render(){
-  var badge = document.getElementById('tabBadge'); if(badge) badge.textContent = state.locations.length;
-  var lc = document.getElementById('localCount');
-  if(lc) lc.textContent = state.locations.length + ' location(s)';
-  var list = document.getElementById('locationList'); if(!list) return;
-  if(!state.locations.length){
-    list.innerHTML = '<div class="empty"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><b>No saved locations yet</b>Tap "Get My Location" or press and hold on the map.</div>';
-    return;
+    if(q.length < 2){
+      results.style.display = 'none';
+      spinner.classList.remove('active');
+      return;
+    }
+    spinner.classList.add('active');
+    searchTimer = setTimeout(function(){ performSearch(q, false); }, 300);
   }
-  var repositId = state.repositioning ? state.repositioning.id : null;
-  var sorted = state.locations.slice().sort(function(a,b){ return new Date(b.updatedAt||0) - new Date(a.updatedAt||0); });
-  list.innerHTML = sorted.map(function(l){
-    return '<div class="loc-item '+(l.id===repositId?'repositioning':'')+'" data-id="'+l.id+'">'+
-      '<div class="info"><div class="title">'+esc(l.title)+'</div><div class="coords">'+fmtCoord(l.lat)+', '+fmtCoord(l.lng)+'</div></div>'+
-      '<div class="acts">'+
-        '<button data-act="dir" data-id="'+l.id+'" class="dir" title="Directions">🧭</button>'+
-        '<button data-act="move" data-id="'+l.id+'" class="move" title="Move">🎯</button>'+
-        '<button data-act="edit" data-id="'+l.id+'" title="Rename">✏️</button>'+
-        '<button data-act="del" data-id="'+l.id+'" class="del" title="Delete">🗑️</button>'+
-      '</div></div>';
-  }).join('');
-}
-function initListClicks(){
-  document.getElementById('locationList').addEventListener('click', function(e){
-    var item = e.target.closest('.loc-item'); if(!item) return;
-    var id = item.dataset.id, btn = e.target.closest('button[data-act]');
-    if(!btn){ flyTo(id); return; }
-    if(btn.dataset.act === 'dir'){ var loc = findLoc(id); if(!loc) return; window.open(dirUrl(loc), '_blank', 'noopener'); toast('Opening directions…'); return; }
-    if(btn.dataset.act === 'move'){ if(state.repositioning && state.repositioning.id===id) cancelReposition(); else enterRepositionMode(id); return; }
-    if(btn.dataset.act === 'edit'){ var l2 = findLoc(id); if(!l2) return; var t = prompt('Edit title:', l2.title); if(t!==null && t.trim()){ l2.title = t.trim(); l2.updatedAt = new Date().toISOString(); commit('Location renamed — syncing'); } }
-    if(btn.dataset.act === 'del'){ var l3 = findLoc(id); if(!l3) return; if(state.repositioning && state.repositioning.id===id) exitRepositionMode(); if(confirm('Delete "'+l3.title+'"?')){ state.locations = state.locations.filter(function(l){ return l.id !== id; }); commit('Location deleted — syncing'); } }
-  });
-}
 
-function commit(msg){
-  saveLocal(); render(); refreshMarkers();
-  state.dirty = true; updateStatus();
-  if(msg) toast(msg);
-  if(state.scriptUrl) scheduleAutoPush();
-}
-var autoPushTimer = null;
-function scheduleAutoPush(){
-  clearTimeout(autoPushTimer);
-  autoPushTimer = setTimeout(function(){ pushToDrive(true); }, 700);
-}
-function updateStatus(){
-  var dot = document.getElementById('statusDot'), txt = document.getElementById('statusText');
-  if(!dot || !txt) return;
-  dot.className = 'dot';
-  if(state.busy){ dot.classList.add('busy'); txt.textContent = 'Syncing with Drive…'; }
-  else if(!state.scriptUrl){ txt.textContent = 'Bridge URL not configured'; }
-  else if(state.lastError){ dot.classList.add('err'); txt.textContent = 'Sync error — see Diagnostics'; }
-  else if(state.dirty){ dot.classList.add('dirty'); txt.textContent = 'Changes pending — syncing soon'; }
-  else { dot.classList.add('on'); txt.textContent = 'Ready — all changes saved'; }
-  var conn = document.getElementById('connState');
-  if(conn){
-    if(state.busy) conn.innerHTML = '<span class="pill warn">Syncing</span>';
-    else if(state.lastError) conn.innerHTML = '<span class="pill err">Error</span>';
-    else if(state.scriptUrl) conn.innerHTML = '<span class="pill ok">Configured</span>';
-    else conn.innerHTML = '<span class="pill off">Not set</span>';
-  }
-  var ls = document.getElementById('lastSyncTime'); if(ls) ls.textContent = fmtTime(state.lastSync);
-}
-function initTabs(){
-  var btns = document.querySelectorAll('.tab-btn');
-  for(var i=0;i<btns.length;i++){
-    btns[i].addEventListener('click', function(){
-      var all = document.querySelectorAll('.tab-btn');
-      for(var j=0;j<all.length;j++) all[j].classList.remove('active');
-      var panels = document.querySelectorAll('.tab-panel');
-      for(var k=0;k<panels.length;k++) panels[k].classList.remove('active');
-      this.classList.add('active');
-      var p = document.getElementById('tab-'+this.dataset.tab);
-      if(p){ p.classList.add('active'); p.scrollTop = 0; }
-      setTimeout(function(){ if(map) map.invalidateSize(); fitPanels(); }, 60);
+  input.addEventListener('input', updateSearchInputState);
+  input.addEventListener('focus', function(){
+    if(results._items && results._items.length > 0 && input.value.trim().length >= 2){
+      results.style.display = 'block';
+    }
+  });
+
+  if(chipsWrap){
+    chipsWrap.addEventListener('click', function(e){
+      var chip = e.target.closest('.search-chip');
+      if(!chip) return;
+      var catKey = chip.dataset.query;
+      var catLabel = chip.textContent.replace(/^[^\w\s]+/, '').trim();
+      
+      chipsWrap.querySelectorAll('.search-chip').forEach(function(c){
+        c.classList.remove('active');
+      });
+      chip.classList.add('active');
+      state.activeCategoryTag = catKey;
+
+      input.value = catLabel + ' nearby';
+      clear.style.display = 'inline-flex';
+      performLocalCategorySearch(catKey, catLabel);
     });
   }
+
+  input.addEventListener('keydown', function(e){
+    var items = results.querySelectorAll('.search-result');
+    if(!items.length || results.style.display === 'none'){
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        var q = input.value.trim();
+        if(q) performSearch(q, true);
+      }
+      return;
+    }
+
+    if(e.key === 'ArrowDown'){
+      e.preventDefault();
+      selectedSearchIdx = Math.min(selectedSearchIdx + 1, items.length - 1);
+      highlightResult(items);
+    } else if(e.key === 'ArrowUp'){
+      e.preventDefault();
+      selectedSearchIdx = Math.max(selectedSearchIdx - 1, 0);
+      highlightResult(items);
+    } else if(e.key === 'Enter'){
+      e.preventDefault();
+      if(selectedSearchIdx >= 0 && selectedSearchIdx < items.length){
+        items[selectedSearchIdx].click();
+      } else if(items[0]){
+        items[0].click();
+      }
+    } else if(e.key === 'Escape'){
+      results.style.display = 'none';
+      input.blur();
+    }
+  });
+
+  function highlightResult(items){
+    items.forEach(function(el, i){
+      el.classList.toggle('selected', i === selectedSearchIdx);
+    });
+    if(items[selectedSearchIdx]){
+      items[selectedSearchIdx].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  clear.addEventListener('click', function(){
+    input.value = '';
+    clear.style.display = 'none';
+    results.style.display = 'none';
+    spinner.classList.remove('active');
+    state.activeCategoryTag = null;
+    clearCategoryMarkers();
+    if(chipsWrap){
+      chipsWrap.querySelectorAll('.search-chip').forEach(function(c){ c.classList.remove('active'); });
+    }
+    input.focus();
+  });
+
+  submitBtn.addEventListener('click', function(){
+    var q = input.value.trim();
+    if(q) performSearch(q, true);
+  });
+
+  results.addEventListener('click', function(e){
+    var row = e.target.closest('.search-result');
+    if(!row) return;
+    var idx = parseInt(row.dataset.idx, 10);
+    var item = results._items ? results._items[idx] : null;
+    if(item) selectSearchResult(item);
+  });
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#searchBar')){
+      results.style.display = 'none';
+    }
+  });
 }
+
+function performLocalCategorySearch(category, label){
+  if(searchAbort) searchAbort.abort();
+  searchAbort = new AbortController();
+
+  var spinner = $('#searchSpinner');
+  if(spinner) spinner.classList.add('active');
+  clearCategoryMarkers();
+
+  var center = map ? map.getCenter() : (state.userPos ? L.latLng(state.userPos.lat, state.userPos.lng) : L.latLng(20.5937, 78.9629));
+  var bounds = map ? map.getBounds() : null;
+
+  var minDelta = 0.05;
+  var south = bounds ? Math.min(bounds.getSouth(), center.lat - minDelta) : (center.lat - minDelta);
+  var north = bounds ? Math.max(bounds.getNorth(), center.lat + minDelta) : (center.lat + minDelta);
+  var west  = bounds ? Math.min(bounds.getWest(), center.lng - minDelta)  : (center.lng - minDelta);
+  var east  = bounds ? Math.max(bounds.getEast(), center.lng + minDelta)  : (center.lng + minDelta);
+
+  var viewboxParam = [west, north, east, south].join(',');
+  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=16&addressdetails=1&bounded=1&viewbox=' + viewboxParam + '&q=' + encodeURIComponent(category);
+
+  fetch(url, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!data || !data.length){
+        var fallbackUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=12&addressdetails=1&bounded=0&viewbox=' + viewboxParam + '&q=' + encodeURIComponent(category);
+        return fetch(fallbackUrl, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } }).then(function(r){ return r.json(); });
+      }
+      return data;
+    })
+    .then(function(data){
+      if(spinner) spinner.classList.remove('active');
+      renderLocalCategoryResults(data || [], category, label);
+    })
+    .catch(function(err){
+      if(err && err.name === 'AbortError') return;
+      if(spinner) spinner.classList.remove('active');
+      toast('Could not fetch local ' + label);
+    });
+}
+
+function renderLocalCategoryResults(data, category, label){
+  var box = $('#searchResults');
+  if(!box) return;
+
+  clearCategoryMarkers();
+
+  if(!data || !data.length){
+    box.innerHTML = '<div class="search-empty">No local <b>' + esc(label) + '</b> found in this area. Try moving or zooming out.</div>';
+    box.style.display = 'block';
+    box._items = [];
+    return;
+  }
+
+  var refPos = state.userPos || (map ? { lat: map.getCenter().lat, lng: map.getCenter().lng } : null);
+  data.forEach(function(d){
+    var dlat = parseFloat(d.lat), dlon = parseFloat(d.lon);
+    if(refPos && !isNaN(dlat) && !isNaN(dlon)){
+      d._distKm = calcDistanceKm(refPos.lat, refPos.lng, dlat, dlon);
+    }
+  });
+
+  data.sort(function(a, b){
+    if(a._distKm !== undefined && b._distKm !== undefined) return a._distKm - b._distKm;
+    return 0;
+  });
+
+  box._items = data;
+
+  var markerGroup = [];
+  data.forEach(function(item, idx){
+    var lat = parseFloat(item.lat), lon = parseFloat(item.lon);
+    if(isNaN(lat) || isNaN(lon)) return;
+
+    var iconChar = getSearchResultIcon(item);
+    var catMarkerIcon = L.divIcon({
+      className: 'cat-local-marker',
+      html: '<div style="position:relative;width:30px;height:36px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.3));">' +
+        '<svg width="30" height="36" viewBox="0 0 30 36" fill="none">' +
+          '<path d="M15 0C6.7 0 0 6.7 0 15C0 24.3 12.8 34.8 14.2 35.8C14.7 36.1 15.3 36.1 15.8 35.8C17.2 34.8 30 24.3 30 15C30 6.7 23.3 0 15 0Z" fill="#ea4335"/>' +
+          '<circle cx="15" cy="15" r="11" fill="#ffffff"/>' +
+        '</svg>' +
+        '<span style="position:absolute;top:5px;font-size:12px;">' + iconChar + '</span>' +
+      '</div>',
+      iconSize: [30, 36],
+      iconAnchor: [15, 36],
+      popupAnchor: [0, -32]
+    });
+
+    var parts = (item.display_name || '').split(',');
+    var title = item.name || parts[0] || 'Local Venue';
+    var address = parts.slice(1, 4).join(',').trim() || item.display_name;
+    var distBadge = (item._distKm !== undefined) ? ' (' + formatDist(item._distKm) + ')' : '';
+
+    var marker = L.marker([lat, lon], { icon: catMarkerIcon }).addTo(map);
+    var dirLink = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lon;
+
+    var popupContent = '<div class="gmap-popup-card">' +
+      '<div class="gmap-popup-title">' + esc(title) + '</div>' +
+      '<div class="gmap-popup-addr">' + esc(address) + distBadge + '</div>' +
+      '<div class="gmap-popup-coords">' + fmtCoord(lat) + ', ' + fmtCoord(lon) + '</div>' +
+      '<div class="gmap-popup-btns">' +
+        '<button class="gmap-btn gmap-btn-save" onclick="window._saveCatVenue(' + idx + ')">💾 Save Location</button>' +
+        '<a href="' + dirLink + '" target="_blank" rel="noopener" class="gmap-btn gmap-btn-dir">🧭 Directions</a>' +
+      '</div>' +
+    '</div>';
+
+    marker.bindPopup(popupContent);
+    state.categoryMarkers.push(marker);
+    markerGroup.push(marker);
+  });
+
+  window._saveCatVenue = function(index){
+    var item = (box._items || [])[index];
+    if(!item) return;
+    var lat = parseFloat(item.lat), lon = parseFloat(item.lon);
+    var parts = (item.display_name || '').split(',');
+    var title = item.name || parts[0] || 'Local Place';
+    var addr = parts.slice(1, 4).join(',').trim();
+
+    openLocationModal({
+      title: title,
+      notes: addr,
+      lat: lat,
+      lng: lon
+    }, function(res){
+      var now = new Date().toISOString();
+      state.locations.push({
+        id: uid(),
+        title: res.title,
+        tag: res.tag,
+        notes: res.notes,
+        lat: lat,
+        lng: lon,
+        createdAt: now,
+        updatedAt: now
+      });
+      commit('Saved "' + res.title + '"');
+    });
+  };
+
+  if(markerGroup.length > 1 && map){
+    var fGroup = L.featureGroup(markerGroup);
+    map.fitBounds(fGroup.getBounds().pad(0.15));
+  } else if(markerGroup.length === 1 && map){
+    map.setView(markerGroup[0].getLatLng(), 15);
+  }
+
+  var headerHtml = '<div class="search-results-header">' +
+    '<span>📍 ' + data.length + ' ' + esc(label) + ' nearby</span>' +
+    '<button class="clear-cat-btn" id="clearCatBtn">Clear</button>' +
+  '</div>';
+
+  var rowsHtml = data.map(function(d, i){
+    var parts = (d.display_name || '').split(',');
+    var main = d.name || parts[0] || 'Unknown place';
+    var sub = parts.slice(1, 4).join(',').trim() || parts[0];
+    var icon = getSearchResultIcon(d);
+    var distStr = (d._distKm !== undefined) ? '<span style="color:#1a73e8;font-weight:700;font-size:11px;margin-left:6px;">' + formatDist(d._distKm) + '</span>' : '';
+
+    return '<div class="search-result" data-idx="' + i + '">' +
+      '<div class="search-result-icon">' + icon + '</div>' +
+      '<div class="sr-body">' +
+        '<div class="sr-name">' + esc(main) + distStr + '</div>' +
+        '<div class="sr-addr">' + esc(sub) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  box.innerHTML = headerHtml + rowsHtml;
+  box.style.display = 'block';
+
+  var clearBtn = $('#clearCatBtn');
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      clearCategoryMarkers();
+      box.style.display = 'none';
+      if($('#searchChips')){
+        $('#searchChips').querySelectorAll('.search-chip').forEach(function(c){ c.classList.remove('active'); });
+      }
+      $('#searchInput').value = '';
+      $('#searchClear').style.display = 'none';
+    });
+  }
+
+  toast('Found ' + data.length + ' ' + label + ' in this area');
+}
+
+function performSearch(q, autoSelectFirst){
+  if(searchAbort) searchAbort.abort();
+  searchAbort = new AbortController();
+
+  var spinner = $('#searchSpinner');
+  if(spinner) spinner.classList.add('active');
+
+  var coordMatch = q.match(/^([-+]?\d{1,2}(?:\.\d+)?)[,\s]+([-+]?\d{1,3}(?:\.\d+)?)$/);
+  if(coordMatch){
+    var lat = parseFloat(coordMatch[1]);
+    var lng = parseFloat(coordMatch[2]);
+    if(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180){
+      if(spinner) spinner.classList.remove('active');
+      var item = {
+        name: 'Coordinates Pin',
+        display_name: fmtCoord(lat) + ', ' + fmtCoord(lng),
+        lat: lat,
+        lon: lng,
+        type: 'coordinate'
+      };
+      renderSearchSuggestions([item], q);
+      if(autoSelectFirst) selectSearchResult(item);
+      return;
+    }
+  }
+
+  var viewboxParam = '';
+  if(map){
+    var b = map.getBounds();
+    viewboxParam = '&viewbox=' + [b.getWest(), b.getNorth(), b.getEast(), b.getSouth()].join(',') + '&bounded=0';
+  }
+
+  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=7&addressdetails=1' + viewboxParam + '&q=' + encodeURIComponent(q);
+
+  fetch(url, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(spinner) spinner.classList.remove('active');
+      renderSearchSuggestions(data || [], q);
+      if(autoSelectFirst && data && data.length > 0){
+        selectSearchResult(data[0]);
+      }
+    })
+    .catch(function(err){
+      if(err.name === 'AbortError') return;
+      if(spinner) spinner.classList.remove('active');
+      var box = $('#searchResults');
+      box.innerHTML = '<div class="search-empty">Could not connect to search. Check internet.</div>';
+      box.style.display = 'block';
+    });
+}
+
+function renderSearchSuggestions(items, query){
+  var box = $('#searchResults');
+  if(!box) return;
+
+  if(!items.length){
+    box.innerHTML = '<div class="search-empty">No results found for "<b>' + esc(query) + '</b>"</div>';
+    box.style.display = 'block';
+    box._items = [];
+    return;
+  }
+
+  box._items = items;
+  box.innerHTML = items.map(function(item, idx){
+    var parts = (item.display_name || '').split(',');
+    var main = item.name || parts[0] || 'Unknown place';
+    var sub = parts.slice(1, 4).join(',').trim() || parts[0];
+    var icon = getSearchResultIcon(item);
+
+    return '<div class="search-result" data-idx="' + idx + '">' +
+      '<div class="search-result-icon">' + icon + '</div>' +
+      '<div class="sr-body">' +
+        '<div class="sr-name">' + esc(main) + '</div>' +
+        '<div class="sr-addr">' + esc(sub) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  box.style.display = 'block';
+}
+
+function selectSearchResult(item){
+  var lat = parseFloat(item.lat);
+  var lng = parseFloat(item.lon);
+  if(isNaN(lat) || isNaN(lng)) return;
+
+  $('#searchResults').style.display = 'none';
+
+  var parts = (item.display_name || '').split(',');
+  var title = item.name || parts[0] || 'Selected Place';
+  var addr = parts.slice(1, 4).join(',').trim();
+
+  $('#searchInput').value = title;
+
+  if(state.searchMarker) map.removeLayer(state.searchMarker);
+
+  var searchIcon = L.divIcon({
+    className: 'search-drop-pin',
+    html: '<div style="position:relative;width:34px;height:42px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35));">' +
+      '<svg width="34" height="42" viewBox="0 0 34 42" fill="none">' +
+        '<path d="M17 0C7.6 0 0 7.6 0 17C0 28.5 15.5 40.5 16.2 41.5C16.6 42.1 17.4 42.1 17.8 41.5C18.5 40.5 34 28.5 34 17C34 7.6 26.4 0 17 0Z" fill="#ea4335"/>' +
+        '<circle cx="17" cy="17" r="7" fill="#ffffff"/>' +
+      '</svg>' +
+    '</div>',
+    iconSize: [34, 42],
+    iconAnchor: [17, 42],
+    popupAnchor: [0, -38]
+  });
+
+  var dirLink = 'https://www.google.com/maps/dir/?api=1&destination=' + lat + ',' + lng;
+
+  state.searchMarker = L.marker([lat, lng], { icon: searchIcon }).addTo(map);
+
+  var popupHtml = '<div class="gmap-popup-card">' +
+    '<div class="gmap-popup-title">' + esc(title) + '</div>' +
+    '<div class="gmap-popup-addr">' + esc(addr || item.display_name) + '</div>' +
+    '<div class="gmap-popup-coords">' + fmtCoord(lat) + ', ' + fmtCoord(lng) + '</div>' +
+    '<div class="gmap-popup-btns">' +
+      '<button class="gmap-btn gmap-btn-save" id="btnSaveFromSearch">💾 Save Location</button>' +
+      '<a href="' + dirLink + '" target="_blank" rel="noopener" class="gmap-btn gmap-btn-dir">🧭 Directions</a>' +
+    '</div>' +
+  '</div>';
+
+  state.searchMarker.bindPopup(popupHtml).openPopup();
+  map.setView([lat, lng], 16, { animate: true });
+
+  setTimeout(function(){
+    var saveBtn = document.getElementById('btnSaveFromSearch');
+    if(saveBtn){
+      saveBtn.addEventListener('click', function(){
+        openLocationModal({
+          title: title,
+          notes: addr,
+          tag: 'place',
+          lat: lat,
+          lng: lng
+        }, function(res){
+          var now = new Date().toISOString();
+          state.locations.push({
+            id: uid(),
+            title: res.title,
+            tag: res.tag,
+            notes: res.notes,
+            lat: lat,
+            lng: lng,
+            createdAt: now,
+            updatedAt: now
+          });
+          if(state.searchMarker){
+            map.removeLayer(state.searchMarker);
+            state.searchMarker = null;
+          }
+          commit('Saved "' + res.title + '"');
+        });
+      });
+    }
+  }, 100);
+}
+
+function reverseGeocode(lat, lng, callback){
+  var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng;
+  fetch(url, { headers:{ 'Accept':'application/json' } })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data && data.display_name){
+        var parts = data.display_name.split(',');
+        callback(data.name || parts[0] || 'Pinned Spot');
+      } else {
+        callback('Pinned Spot');
+      }
+    })
+    .catch(function(){
+      callback('Pinned Spot');
+    });
+}
+
+function renderList(){
+  var badge = $('#tabBadge');
+  if(badge) badge.textContent = state.locations.length;
+
+  var listEl = $('#locationList');
+  if(!listEl) return;
+
+  var items = state.locations.slice();
+
+  if(state.activeFilter){
+    var q = state.activeFilter.toLowerCase();
+    items = items.filter(function(l){
+      return (l.title || '').toLowerCase().includes(q) ||
+             (l.notes || '').toLowerCase().includes(q) ||
+             (l.tag || '').toLowerCase().includes(q);
+    });
+  }
+
+  if(state.userPos){
+    items.forEach(function(l){
+      l._distKm = calcDistanceKm(state.userPos.lat, state.userPos.lng, l.lat, l.lng);
+    });
+  }
+
+  if(state.activeSort === 'nearest' && state.userPos){
+    items.sort(function(a, b){ return (a._distKm || 0) - (b._distKm || 0); });
+  } else if(state.activeSort === 'az'){
+    items.sort(function(a, b){ return (a.title || '').localeCompare(b.title || ''); });
+  } else {
+    items.sort(function(a, b){
+      return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+    });
+  }
+
+  if(!items.length){
+    listEl.innerHTML = '<div class="empty">' +
+      '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>' +
+      '</svg>' +
+      '<b>No saved locations found</b>' +
+      '<span>Search a place above, tap "Get My Location", or press and hold the map for 3s.</span>' +
+    '</div>';
+    return;
+  }
+
+  var reposId = state.repositioning ? state.repositioning.id : null;
+
+  listEl.innerHTML = items.map(function(l){
+    var tagClass = 'loc-tag-' + (l.tag || 'place');
+    var distStr = (l._distKm !== undefined) ? '<span class="loc-dist">(' + formatDist(l._distKm) + ')</span>' : '';
+
+    return '<div class="loc-item ' + (l.id === reposId ? 'repositioning' : '') + '" data-id="' + l.id + '">' +
+      '<div class="info">' +
+        '<div class="title">' +
+          '<span class="loc-tag-badge ' + tagClass + '">' + esc(l.tag || 'place') + '</span>' +
+          '<span>' + esc(l.title) + '</span>' +
+        '</div>' +
+        '<div class="coords">' +
+          '<span>' + fmtCoord(l.lat) + ', ' + fmtCoord(l.lng) + '</span>' +
+          distStr +
+        '</div>' +
+      '</div>' +
+      '<div class="acts">' +
+        '<button data-act="dir" title="Google Directions">🧭</button>' +
+        '<button data-act="move" title="Move Pin">🎯</button>' +
+        '<button data-act="edit" title="Edit">✏️</button>' +
+        '<button data-act="del" class="del" title="Delete">🗑️</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function initListActions(){
+  var listEl = $('#locationList');
+  if(!listEl) return;
+
+  listEl.addEventListener('click', function(e){
+    var item = e.target.closest('.loc-item');
+    if(!item) return;
+    var id = item.dataset.id;
+    var loc = state.locations.find(function(l){ return l.id === id; });
+    if(!loc) return;
+
+    var btn = e.target.closest('button[data-act]');
+    if(!btn){
+      map.setView([loc.lat, loc.lng], 16, { animate: true });
+      var m = state.markers.get(id);
+      if(m) m.openPopup();
+      return;
+    }
+
+    var act = btn.dataset.act;
+    if(act === 'dir'){
+      var dirLink = 'https://www.google.com/maps/dir/?api=1&destination=' + loc.lat + ',' + loc.lng;
+      window.open(dirLink, '_blank', 'noopener');
+    } else if(act === 'move'){
+      if(state.repositioning && state.repositioning.id === id){
+        cancelReposition();
+      } else {
+        enterRepositionMode(id);
+      }
+    } else if(act === 'edit'){
+      openLocationModal(loc, function(res){
+        loc.title = res.title;
+        loc.tag = res.tag;
+        loc.notes = res.notes;
+        loc.updatedAt = new Date().toISOString();
+        commit('Updated "' + loc.title + '"');
+      });
+    } else if(act === 'del'){
+      openConfirmModal('Delete Location', 'Are you sure you want to delete "' + loc.title + '"?', function(){
+        if(state.repositioning && state.repositioning.id === id) exitRepositionMode();
+        state.locations = state.locations.filter(function(l){ return l.id !== id; });
+        commit('Deleted "' + loc.title + '"');
+      });
+    }
+  });
+
+  $('#locFilterInput').addEventListener('input', function(e){
+    state.activeFilter = e.target.value.trim();
+    renderList();
+  });
+
+  $('#locSortSelect').addEventListener('change', function(e){
+    state.activeSort = e.target.value;
+    renderList();
+  });
+}
+
+var modalCallback = null;
+
+function openLocationModal(data, onSave){
+  modalCallback = onSave;
+  $('#locModalTitle').textContent = data && data.createdAt ? 'Edit Location' : 'Save Location';
+  $('#locModalInputTitle').value = data && data.title ? data.title : 'My Location';
+  $('#locModalSelectTag').value = data && data.tag ? data.tag : 'place';
+  $('#locModalTextNotes').value = data && data.notes ? data.notes : '';
+  $('#locModalCoordsText').textContent = fmtCoord(data.lat) + ', ' + fmtCoord(data.lng);
+
+  $('#locationModal').classList.add('open');
+  setTimeout(function(){ $('#locModalInputTitle').focus(); }, 150);
+}
+
+function closeLocationModal(){
+  $('#locationModal').classList.remove('open');
+  modalCallback = null;
+}
+
+var confirmCallback = null;
+function openConfirmModal(title, msg, onOk){
+  confirmCallback = onOk;
+  $('#confirmModalTitle').textContent = title || 'Confirm';
+  $('#confirmModalMsg').textContent = msg || 'Are you sure?';
+  $('#confirmModal').classList.add('open');
+}
+
+function closeConfirmModal(){
+  $('#confirmModal').classList.remove('open');
+  confirmCallback = null;
+}
+
+function initModals(){
+  $('#locModalClose').addEventListener('click', closeLocationModal);
+  $('#locModalCancel').addEventListener('click', closeLocationModal);
+  $('#locModalSave').addEventListener('click', function(){
+    var t = $('#locModalInputTitle').value.trim();
+    if(!t) return toast('Please enter a title');
+    var tag = $('#locModalSelectTag').value;
+    var notes = $('#locModalTextNotes').value.trim();
+
+    if(modalCallback){
+      modalCallback({ title: t, tag: tag, notes: notes });
+    }
+    closeLocationModal();
+  });
+
+  $('#confirmModalClose').addEventListener('click', closeConfirmModal);
+  $('#confirmModalCancel').addEventListener('click', closeConfirmModal);
+  $('#confirmModalOk').addEventListener('click', function(){
+    if(confirmCallback) confirmCallback();
+    closeConfirmModal();
+  });
+}
+
 function initGeolocation(){
-  document.getElementById('btnTrack').addEventListener('click', function(){
-    if(!navigator.geolocation) return toast('Geolocation not supported');
-    toast('Getting your location…');
+  $('#btnTrack').addEventListener('click', function(){
+    if(!navigator.geolocation) return toast('Geolocation not supported by your browser');
+    toast('📡 Locating you…');
+
     navigator.geolocation.getCurrentPosition(
       function(pos){
-        var lat = pos.coords.latitude, lng = pos.coords.longitude;
-        state.tempLatLng = { lat:lat, lng:lng };
-        if(state.tempMarker) map.removeLayer(state.tempMarker);
-        state.tempMarker = L.marker([lat, lng], { draggable:true }).addTo(map).bindPopup('You are here — drag to fine-tune').openPopup();
-        state.tempMarker.on('dragend', function(ev){ var p=ev.target.getLatLng(); state.tempLatLng={lat:p.lat,lng:p.lng}; });
-        map.setView([lat, lng], 16);
-        document.getElementById('btnSaveCurrent').disabled = false;
-        toast('Location found');
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        var acc = pos.coords.accuracy || 20;
+
+        state.userPos = { lat: lat, lng: lng };
+
+        if(state.gpsAccuracyCircle) map.removeLayer(state.gpsAccuracyCircle);
+        state.gpsAccuracyCircle = L.circle([lat, lng], {
+          radius: acc,
+          color: '#1a73e8',
+          fillColor: '#1a73e8',
+          fillOpacity: 0.12,
+          weight: 1.5
+        }).addTo(map);
+
+        setTempMarker({ lat: lat, lng: lng }, 'You Are Here');
+        map.setView([lat, lng], 16, { animate: true });
+        renderList();
+        toast('Location found (±' + Math.round(acc) + 'm)');
       },
-      function(err){ var msgs = { 1:'Permission denied', 2:'Position unavailable', 3:'Timed out' }; toast('Location error: '+(msgs[err.code]||err.message)); },
-      { enableHighAccuracy:true, timeout:15000, maximumAge:0 }
+      function(err){
+        var msgs = { 1:'GPS permission denied', 2:'Position unavailable', 3:'GPS timed out' };
+        toast('Location error: ' + (msgs[err.code] || err.message));
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   });
-  document.getElementById('btnSaveCurrent').addEventListener('click', function(){
+
+  $('#btnSaveCurrent').addEventListener('click', function(){
     if(!state.tempLatLng) return;
-    var title = prompt('Title for this location:', 'My place');
-    if(!title || !title.trim()) return;
-    var now = new Date().toISOString();
-    state.locations.push({ id:uid(), title:title.trim(), lat:state.tempLatLng.lat, lng:state.tempLatLng.lng, createdAt:now, updatedAt:now });
-    if(state.tempMarker){ map.removeLayer(state.tempMarker); state.tempMarker = null; }
-    state.tempLatLng = null;
-    document.getElementById('btnSaveCurrent').disabled = true;
-    commit('Location saved — syncing');
+    var cur = state.tempLatLng;
+    reverseGeocode(cur.lat, cur.lng, function(suggested){
+      openLocationModal({
+        title: suggested || 'Current Location',
+        notes: '',
+        tag: 'place',
+        lat: cur.lat,
+        lng: cur.lng
+      }, function(res){
+        var now = new Date().toISOString();
+        state.locations.push({
+          id: uid(),
+          title: res.title,
+          tag: res.tag,
+          notes: res.notes,
+          lat: cur.lat,
+          lng: cur.lng,
+          createdAt: now,
+          updatedAt: now
+        });
+        clearTempMarker();
+        commit('Saved "' + res.title + '"');
+      });
+    });
   });
 }
-function initSettings(){
-  document.getElementById('btnSaveGmail').addEventListener('click', function(){
-    var v = document.getElementById('gmailInput').value.trim();
-    if(!v) return toast('Please enter a Gmail ID');
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return toast("That doesn't look like a valid email");
-    state.gmail = v; localStorage.setItem(CONFIG.LS_GMAIL, v);
-    state.dirty = true; updateStatus(); toast('Gmail ID saved — syncing');
-    if(state.scriptUrl) scheduleAutoPush();
+
+function initMapControls(){
+  var menu = $('#layerMenu');
+  var layerBtn = $('#btnLayerToggle');
+  var trafficBadge = $('#trafficBadge');
+
+  layerBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    var isOpen = menu.classList.toggle('open');
+    layerBtn.classList.toggle('active', isOpen);
   });
-  document.getElementById('btnSaveScript').addEventListener('click', function(){
-    var v = document.getElementById('scriptUrlInput').value.trim().replace(/^["']|["']$/g,'');
-    if(!v) return toast('Please paste your Apps Script Web App URL');
-    if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/(exec|dev)/.test(v)) return toast('URL should look like …/macros/s/…/exec');
-    if(v.indexOf('/dev') > -1) toast('Warning: use the /exec URL, not /dev');
-    state.scriptUrl = v; localStorage.setItem(CONFIG.LS_URL, v);
-    setLastError(null); updateStatus(); toast('Script URL saved — syncing now');
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#layerMenu') && !e.target.closest('#btnLayerToggle')){
+      menu.classList.remove('open');
+      layerBtn.classList.remove('active');
+    }
+  });
+
+  $$('.layer-opt').forEach(function(opt){
+    opt.addEventListener('click', function(){
+      var key = this.dataset.layer;
+      if(key === currentTileLayer){
+        menu.classList.remove('open');
+        layerBtn.classList.remove('active');
+        return;
+      }
+
+      $$('.layer-opt').forEach(function(b){ b.classList.remove('active'); });
+      this.classList.add('active');
+
+      if(tileLayers[currentTileLayer]) map.removeLayer(tileLayers[currentTileLayer]);
+      tileLayers[key].addTo(map);
+      currentTileLayer = key;
+
+      // Show/hide live traffic status badge
+      if(trafficBadge){
+        trafficBadge.style.display = (key === 'traffic') ? 'flex' : 'none';
+      }
+
+      menu.classList.remove('open');
+      layerBtn.classList.remove('active');
+      var nameEl = this.querySelector('.layer-opt-name');
+      toast('Switched to ' + (nameEl ? nameEl.textContent : this.textContent));
+    });
+  });
+
+  $('#btnFitAll').addEventListener('click', function(){
+    if(!state.locations.length) return toast('No saved locations to show');
+    var bounds = L.latLngBounds(state.locations.map(function(l){ return [l.lat, l.lng]; }));
+    map.fitBounds(bounds.pad(0.18));
+    toast('Showing all ' + state.locations.length + ' locations');
+  });
+
+  $('#repositionSave').addEventListener('click', saveReposition);
+  $('#repositionCancel').addEventListener('click', cancelReposition);
+}
+
+function initSettingsUI(){
+  var src = $('#appsScriptSource'), out = $('#appsScriptCode');
+  if(src && out) out.textContent = src.textContent.trim();
+
+  $('#btnCopyAppsScript').addEventListener('click', function(){
+    var btn = this;
+    var code = $('#appsScriptCode').textContent;
+    var ta = document.createElement('textarea');
+    ta.value = code;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      btn.textContent = '✅ Copied!';
+      toast('Apps Script code copied');
+      setTimeout(function(){ btn.textContent = '📋 Copy code'; }, 2000);
+    } catch(e){
+      toast('Copy failed. Select and copy manually.');
+    }
+    document.body.removeChild(ta);
+  });
+
+  $('#codeToggle').addEventListener('click', function(){
+    var body = $('#codeBody');
+    var isOpen = body.classList.toggle('open');
+    this.classList.toggle('open', isOpen);
+  });
+
+  var guide = $('#deployGuide');
+  var guideHeader = $('#deployGuideHeader');
+  if(guide && guideHeader){
+    guideHeader.addEventListener('click', function(){
+      var isOpen = guide.classList.toggle('open');
+      localStorage.setItem(CONFIG.LS_GUIDE_OPEN, String(isOpen));
+    });
+  }
+
+  $('#gmailInput').value = state.gmail;
+  $('#btnSaveGmail').addEventListener('click', function(){
+    var v = $('#gmailInput').value.trim();
+    if(v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return toast('Please enter a valid Gmail address');
+    state.gmail = v;
+    localStorage.setItem(CONFIG.LS_GMAIL, v);
+    commit('Gmail ID saved');
+  });
+
+  $('#scriptUrlInput').value = state.scriptUrl;
+  $('#btnSaveScript').addEventListener('click', function(){
+    var v = $('#scriptUrlInput').value.trim().replace(/^["']|["']$/g, '');
+    if(!v) return toast('Please paste your Web App URL');
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/(exec|dev)/.test(v)){
+      return toast('URL should look like https://script.google.com/macros/s/.../exec');
+    }
+    if(v.includes('/dev')) toast('Notice: using /dev test URL. /exec is recommended for production.');
+    state.scriptUrl = v;
+    localStorage.setItem(CONFIG.LS_URL, v);
+    updateStatus();
+    toast('Script URL saved — syncing');
     pushToDrive(false);
   });
-  document.getElementById('btnOpenInBrowser').addEventListener('click', function(){
+
+  $('#btnOpenInBrowser').addEventListener('click', function(){
     if(!state.scriptUrl) return toast('Save a Script URL first');
     window.open(state.scriptUrl + '?action=ping', '_blank', 'noopener');
-    toast('Opened in new tab');
   });
-  document.getElementById('autoSync').addEventListener('change', function(e){
+
+  $('#autoSync').checked = state.autoSync;
+  $('#autoSync').addEventListener('change', function(e){
     state.autoSync = e.target.checked;
     localStorage.setItem(CONFIG.LS_AUTO, String(state.autoSync));
     toast(state.autoSync ? 'Auto-sync enabled' : 'Auto-sync disabled');
     if(state.autoSync && state.scriptUrl) scheduleAutoPush();
   });
-  document.getElementById('btnSync').addEventListener('click', function(){ pushToDrive(false); });
-  document.getElementById('btnImport').addEventListener('click', function(){ pullFromDrive(); });
-  document.getElementById('btnDisconnect').addEventListener('click', function(){
-    if(!confirm('Clear the saved Apps Script URL?')) return;
-    state.scriptUrl = ''; localStorage.removeItem(CONFIG.LS_URL);
-    setLastError(null); updateStatus(); toast('Script URL cleared');
+
+  $('#btnSync').addEventListener('click', function(){ pushToDrive(false); });
+  $('#btnImport').addEventListener('click', function(){ pullFromDrive(); });
+
+  $('#btnDisconnect').addEventListener('click', function(){
+    openConfirmModal('Disconnect Script', 'Clear the saved Web App URL?', function(){
+      state.scriptUrl = '';
+      localStorage.removeItem(CONFIG.LS_URL);
+      $('#scriptUrlInput').value = '';
+      updateStatus();
+      toast('Script URL disconnected');
+    });
   });
-  document.getElementById('btnExportLocal').addEventListener('click', function(){
-    var blob = new Blob([JSON.stringify(buildPayload(), null, 2)], { type:'application/json' });
+
+  $('#btnExportLocal').addEventListener('click', function(){
+    var data = {
+      app: 'MyLocationTracker',
+      version: 3,
+      gmail: state.gmail || null,
+      exportedAt: new Date().toISOString(),
+      locations: state.locations
+    };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
     var url = URL.createObjectURL(blob);
-    var a = document.createElement('a'); a.href = url;
-    a.download = 'locations_'+new Date().toISOString().slice(0,10)+'.json';
-    a.click(); URL.revokeObjectURL(url); toast('Exported local JSON');
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'locations_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('Exported local backup file');
   });
-  document.getElementById('btnClearLocal').addEventListener('click', function(){
-    if(!confirm('Clear all local locations? Drive copy is not affected.')) return;
-    state.locations = []; state.dirty = true;
-    saveLocal(); render(); refreshMarkers(); updateStatus();
-    toast('Local data cleared — syncing empty list');
-    if(state.scriptUrl) scheduleAutoPush();
+
+  $('#btnImportLocalTrigger').addEventListener('click', function(){
+    $('#localFileInput').click();
   });
-  document.getElementById('btnDiagnose').addEventListener('click', runDiagnostics);
-  document.getElementById('repositionSave').addEventListener('click', saveReposition);
-  document.getElementById('repositionCancel').addEventListener('click', cancelReposition);
-}
-function callScript(action, payload){
-  if(!state.scriptUrl) return Promise.reject(new Error('Script URL not configured'));
-  var params = new URLSearchParams();
-  params.append('action', action);
-  if(payload !== undefined) params.append('payload', JSON.stringify(payload));
-  return fetch(state.scriptUrl, { method:'POST', body:params }).then(function(res){
-    return res.text().then(function(text){
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      var trimmed = text.trim();
-      var looksHtml = /^<!DOCTYPE|^<html/i.test(trimmed);
-      var looksLogin = /accounts\.google\.com|ServiceLogin/i.test(text);
-      var looksText = trimmed.charAt(0) !== '{' && trimmed.charAt(0) !== '[';
+
+  $('#localFileInput').addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(evt){
       try {
-        var data = JSON.parse(text);
-        if(data.ok === false) throw new Error(data.error || 'Script error');
-        return data;
-      } catch(parseErr){
-        var hint = 'Invalid response from bridge';
-        if(looksHtml || looksLogin) hint = 'Bridge returned HTML/login — set "Who has access" to "Anyone"';
-        else if(looksText) hint = 'Bridge returned plain text — deployment is stale or wrong';
-        var err = new Error(hint); err.rawResponse = text; throw err;
+        var parsed = JSON.parse(evt.target.result);
+        var importedLocs = Array.isArray(parsed) ? parsed : (parsed.locations || []);
+        if(!Array.isArray(importedLocs)) throw new Error('Invalid JSON structure');
+
+        var mapExisting = new Map(state.locations.map(function(l){ return [l.id, l]; }));
+        var count = 0;
+        importedLocs.forEach(function(l){
+          if(l && typeof l.lat === 'number' && typeof l.lng === 'number'){
+            var id = l.id || uid();
+            mapExisting.set(id, Object.assign({}, l, { id: id }));
+            count++;
+          }
+        });
+        state.locations = Array.from(mapExisting.values());
+        commit('Imported ' + count + ' locations from file');
+      } catch(err){
+        toast('Failed to parse file: ' + err.message);
       }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  $('#btnClearLocal').addEventListener('click', function(){
+    openConfirmModal('Clear All Locations', 'This will delete all locations from this browser. Google Drive data will remain unless synced.', function(){
+      state.locations = [];
+      commit('All local data cleared');
     });
   });
+
+  $('#btnDiagnose').addEventListener('click', runDiagnostics);
 }
-function diagLog(rows, pass, label, detail, raw){ rows.push({ pass:pass, label:label, detail:detail||'', raw:raw||null }); }
-function renderDiag(rows){
-  var el = document.getElementById('diagResults');
-  el.innerHTML = rows.map(function(r){
-    var cls = r.pass === true ? 'pass' : r.pass === 'warn' ? 'warn' : 'fail';
-    var icon = r.pass === true ? '✅' : r.pass === 'warn' ? '⚠️' : '❌';
-    var rawHtml = r.raw ? '<div class="raw">'+esc(r.raw.slice(0,600))+'</div>' : '';
-    return '<div class="diag-row '+cls+'"><span class="icon">'+icon+'</span><div class="text"><div class="label">'+esc(r.label)+'</div>'+(r.detail?'<div class="detail">'+esc(r.detail)+'</div>':'')+rawHtml+'</div></div>';
-  }).join('');
-  el.classList.add('show');
-}
+
 function runDiagnostics(){
+  var box = $('#diagResults');
+  box.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text-muted);">Running checks…</div>';
+  box.classList.add('show');
+
   var rows = [];
-  var btn = document.getElementById('btnDiagnose');
-  btn.disabled = true; btn.textContent = '⏳ Running…';
-  function finish(){ btn.disabled = false; btn.textContent = '▶ Run Diagnostics'; renderDiag(rows); }
-  if(!state.scriptUrl){ diagLog(rows, false, 'Bridge URL saved', 'Go to Step 3 and paste your Web App URL.'); return finish(); }
-  diagLog(rows, true, 'Bridge URL saved', state.scriptUrl);
-  var isExec = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(state.scriptUrl);
-  var isDev  = /^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/dev$/.test(state.scriptUrl);
-  if(isDev) diagLog(rows, false, 'URL uses /dev (test mode)', 'Use the /exec URL instead.');
-  else if(!isExec) diagLog(rows, false, 'URL format wrong', 'Expected: …/macros/s/…/exec');
-  else diagLog(rows, true, 'URL format is valid', 'Ends in /exec — good.');
-  callScript('ping').then(function(pingData){
-    diagLog(rows, true, 'Bridge is reachable', pingData.message || 'ok');
-    return callScript('echo', { hello:'world' });
-  }).then(function(res){
-    var ok = res.echoed && res.echoed.hello === 'world';
-    diagLog(rows, ok, 'Payload round-trip', ok ? 'Echo OK' : 'Echo failed');
-    return callScript('load');
-  }).then(function(res){
-    if(res.found){ var n = res.data && res.data.locations ? res.data.locations.length : 0; diagLog(rows, true, 'Drive read works', 'Found file with '+n+' location(s)'); }
-    else diagLog(rows, 'warn', 'Drive read works', 'No file yet. Press Sync to create it.');
-    toast('✅ All checks passed');
-    finish();
-  }).catch(function(err){
-    diagLog(rows, false, 'Bridge is not reachable', err.message, err.rawResponse);
-    var raw = (err.rawResponse||'').trim();
-    if(/^action=/i.test(raw)) diagLog(rows, false, 'Root cause: stale deployment', 'Re-deploy with "New version".');
-    else if(/accounts\.google\.com|ServiceLogin/i.test(err.rawResponse||'')) diagLog(rows, false, 'Root cause: login page', 'Set "Who has access" to "Anyone".');
-    else if(/<!DOCTYPE|^<html/i.test(raw)) diagLog(rows, false, 'Root cause: HTML response', 'Check "Who has access" setting.');
-    toast('Diagnostics failed — see results');
-    finish();
+  function log(pass, label, detail){
+    rows.push({ pass: pass, label: label, detail: detail || '' });
+    renderDiag(rows);
+  }
+
+  if(!state.scriptUrl){
+    log(false, 'Script URL Configured', 'No Web App URL found. Paste your /exec URL in Step 3.');
+    return;
+  }
+
+  log(true, 'Script URL Configured', state.scriptUrl);
+
+  var isExec = state.scriptUrl.includes('/exec');
+  if(!isExec){
+    log('warn', 'Deployment Endpoint', 'URL does not end in /exec. Test /dev URLs may request login.');
+  } else {
+    log(true, 'Deployment Endpoint', 'Correct /exec endpoint.');
+  }
+
+  callBridge('ping')
+    .then(function(res){
+      log(true, 'Ping Web App', res.message || 'Connected OK');
+      return callBridge('echo', { test: 123 });
+    })
+    .then(function(res){
+      var ok = res.echoed && res.echoed.test === 123;
+      log(ok ? true : false, 'Round-trip Echo Test', ok ? 'Payload delivered & returned' : 'Echo mismatch');
+      return callBridge('load');
+    })
+    .then(function(res){
+      if(res.found){
+        var n = res.data && res.data.locations ? res.data.locations.length : 0;
+        log(true, 'Google Drive Access', 'Found saved_address.json with ' + n + ' locations.');
+      } else {
+        log('warn', 'Google Drive Access', 'Bridge works! File not created yet — press "Sync to Google Drive" to create it.');
+      }
+      toast('✅ Diagnostics passed!');
+    })
+    .catch(function(err){
+      log(false, 'Connectivity Error', err.message);
+      toast('Diagnostics reported issues.');
+    });
+}
+
+function renderDiag(rows){
+  var box = $('#diagResults');
+  box.innerHTML = rows.map(function(r){
+    var cls = r.pass === true ? 'pass' : (r.pass === 'warn' ? 'warn' : 'fail');
+    var icon = r.pass === true ? '✅' : (r.pass === 'warn' ? '⚠️' : '❌');
+    return '<div class="diag-row ' + cls + '">' +
+      '<span>' + icon + '</span>' +
+      '<div class="text">' +
+        '<div class="label">' + esc(r.label) + '</div>' +
+        (r.detail ? '<div class="detail">' + esc(r.detail) + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function initTabs(){
+  $$('.tab-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      $$('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      $$('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+
+      this.classList.add('active');
+      var tabId = 'tab-' + this.dataset.tab;
+      var panel = $('#' + tabId);
+      if(panel){
+        panel.classList.add('active');
+        panel.scrollTop = 0;
+      }
+      setTimeout(function(){ if(map) map.invalidateSize(); }, 80);
+    });
   });
 }
-function buildPayload(){ return { app:'MyLocationTracker', version:3, gmail:state.gmail||null, updatedAt:new Date().toISOString(), count:state.locations.length, locations:state.locations }; }
-function pushToDrive(silent){
-  if(state.busy) return Promise.resolve();
-  if(!state.scriptUrl){ if(!silent) toast('Save your Apps Script URL first'); return Promise.resolve(); }
-  state.busy = true; updateStatus();
-  return callScript('save', buildPayload()).then(function(res){
-    state.dirty = false; state.lastSync = new Date().toISOString();
-    localStorage.setItem(CONFIG.LS_SYNC, state.lastSync); setLastError(null);
-    if(!silent) toast('Synced '+(res.count != null ? res.count : state.locations.length)+' location(s)');
-  }).catch(function(err){
-    console.error(err); setLastError(err.message);
-    if(!silent) toast('Sync failed: '+err.message);
-  }).then(function(){ state.busy = false; updateStatus(); });
-}
-function pullFromDrive(){
-  if(state.busy) return;
-  if(!state.scriptUrl) return toast('Save your Apps Script URL first');
-  state.busy = true; updateStatus();
-  callScript('load').then(function(res){
-    if(!res.found){ toast('No saved file found'); setLastError(null); return; }
-    var data = res.data || {};
-    var remote = Array.isArray(data.locations) ? data.locations : (Array.isArray(data) ? data : []);
-    if(!remote.length){ toast('Drive file has no locations'); setLastError(null); return; }
-    var byId = new Map(state.locations.map(function(l){ return [l.id, l]; }));
-    var added = 0, updated = 0;
-    remote.forEach(function(loc){
-      if(!loc || loc.id == null || typeof loc.lat !== 'number') return;
-      var existing = byId.get(loc.id);
-      if(!existing){ byId.set(loc.id, loc); added++; }
-      else { var a = new Date(existing.updatedAt||0).getTime(); var b = new Date(loc.updatedAt||0).getTime(); if(b > a){ byId.set(loc.id, loc); updated++; } }
-    });
-    state.locations = Array.from(byId.values());
-    if(data.gmail && !state.gmail){ state.gmail = data.gmail; localStorage.setItem(CONFIG.LS_GMAIL, data.gmail); document.getElementById('gmailInput').value = data.gmail; }
-    state.dirty = false; state.lastSync = new Date().toISOString();
-    localStorage.setItem(CONFIG.LS_SYNC, state.lastSync); setLastError(null);
-    saveLocal(); render(); refreshMarkers();
-    toast('Import complete — '+added+' new, '+updated+' updated');
-  }).catch(function(err){
-    console.error(err); setLastError(err.message);
-    toast('Import failed: '+err.message);
-  }).then(function(){ state.busy = false; updateStatus(); });
-}
+
 function boot(){
   try {
-    loadAppsScriptPreset(); initCopyButton(); initCodeToggle(); initDeployCollapsible(); loadLocal();
-    document.getElementById('gmailInput').value = state.gmail;
-    document.getElementById('scriptUrlInput').value = state.scriptUrl;
-    document.getElementById('autoSync').checked = state.autoSync;
-    initMap(); initTabs(); initListClicks(); initGeolocation(); initSettings(); initSearch();
-    render(); updateStatus();
-    if(state.lastError) setLastError(state.lastError);
+    loadLocal();
+    initMap();
+    initSearch();
+    initGeolocation();
+    initMapControls();
+    initListActions();
+    initModals();
+    initSettingsUI();
+    initTabs();
 
-    fitPanels();
-    setTimeout(fitPanels, 100);
-    setTimeout(fitPanels, 500);
-    window.addEventListener('resize', fitPanels);
-    window.addEventListener('orientationchange', function(){ setTimeout(fitPanels, 200); });
-    if(window.ResizeObserver){ new ResizeObserver(fitPanels).observe(document.getElementById('sidebar')); }
+    renderList();
+    updateStatus();
 
-    if(state.dirty && state.scriptUrl) scheduleAutoPush();
+    if(state.scriptUrl && state.dirty){
+      scheduleAutoPush();
+    }
 
-    window.addEventListener('beforeunload', function(e){ if(state.dirty && state.scriptUrl){ e.preventDefault(); e.returnValue=''; } });
-  } catch(err){
-    console.error('Boot error:', err);
-    var t = document.getElementById('toast');
-    if(t){ t.textContent = 'Init error: '+err.message; t.classList.add('show'); }
+    window.addEventListener('resize', function(){
+      if(map) map.invalidateSize();
+    });
+
+  } catch(e){
+    console.error('Boot error:', e);
+    toast('Application error: ' + e.message);
   }
 }
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-else boot();
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
+
 })();
 </script>
 </body>
