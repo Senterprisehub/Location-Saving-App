@@ -1526,6 +1526,7 @@ input:focus, textarea:focus, select:focus {
 
 <div id="toast"></div>
 
+<!-- Universal, resilient Apps Script source code with multi-format fallback parsing -->
 <script type="text/plain" id="appsScriptSource">
 const FOLDER_NAME = 'Saved address';
 const FILE_NAME   = 'saved_address.json';
@@ -1536,17 +1537,47 @@ function doGet(e)  { return handle(e); }
 function handle(e) {
   try {
     var action = null, body = {};
+
+    // 1. Check URL parameters / standard parsed form parameters
     if (e && e.parameter && e.parameter.action) {
       action = e.parameter.action;
       if (e.parameter.payload) {
-        try { body = JSON.parse(e.parameter.payload); } catch (_) { body = {}; }
+        try {
+          body = typeof e.parameter.payload === 'string' ? JSON.parse(e.parameter.payload) : e.parameter.payload;
+        } catch (_) {
+          body = {};
+        }
       }
-    } else if (e && e.postData && e.postData.contents) {
+    }
+
+    // 2. Fallback: Parse postData.contents if action not yet detected or if payload is in POST body
+    if (e && e.postData && e.postData.contents) {
+      var raw = e.postData.contents;
+
+      // Try raw JSON parse: {"action":"save","payload":{...}}
       try {
-        var p = JSON.parse(e.postData.contents);
-        action = p.action;
-        body = p.payload || {};
-      } catch (_) {}
+        var parsedJson = JSON.parse(raw);
+        if (parsedJson) {
+          if (!action && parsedJson.action) action = parsedJson.action;
+          if (parsedJson.payload !== undefined) body = parsedJson.payload;
+        }
+      } catch (_) {
+        // Try urlencoded form string parse: action=load&payload=...
+        try {
+          var pairs = raw.split('&');
+          for (var i = 0; i < pairs.length; i++) {
+            var kv = pairs[i].split('=');
+            if (kv.length >= 2) {
+              var k = decodeURIComponent(kv[0].replace(/\+/g, ' '));
+              var v = decodeURIComponent(kv.slice(1).join('=').replace(/\+/g, ' '));
+              if (k === 'action' && !action) action = v;
+              if (k === 'payload') {
+                try { body = JSON.parse(v); } catch (_) { body = v; }
+              }
+            }
+          }
+        } catch (_) {}
+      }
     }
 
     var result;
@@ -1768,28 +1799,46 @@ function updateStatus(){
   }
 }
 
+/**
+ * Universal bridge caller with dual parameter passing:
+ * 1. Appends action to URL query string (?action=...) ensuring Apps Script receives it
+ *    even across 302 redirects without dropping.
+ * 2. Appends action and payload to POST body for rich payloads.
+ */
 function callBridge(action, payload){
   if(!state.scriptUrl) return Promise.reject(new Error('Script URL is empty'));
+
+  // Dual-append: ensures e.parameter.action is guaranteed even if POST body drops on 302 redirect
+  var sep = state.scriptUrl.indexOf('?') >= 0 ? '&' : '?';
+  var targetUrl = state.scriptUrl + sep + 'action=' + encodeURIComponent(action);
+
   var params = new URLSearchParams();
   params.append('action', action);
-  if(payload !== undefined) params.append('payload', JSON.stringify(payload));
+  if(payload !== undefined) {
+    params.append('payload', typeof payload === 'string' ? payload : JSON.stringify(payload));
+  }
 
-  return fetch(state.scriptUrl, { method:'POST', body:params })
+  return fetch(targetUrl, { method:'POST', body:params })
     .then(function(res){
       if(!res.ok) throw new Error('HTTP status ' + res.status);
       return res.text();
     })
     .then(function(raw){
+      var data;
       try {
-        var data = JSON.parse(raw);
-        if(data.ok === false) throw new Error(data.error || 'Server error');
-        return data;
+        data = JSON.parse(raw);
       } catch(parseErr){
         if(/accounts\.google\.com/i.test(raw)) {
           throw new Error('Script permission issue: ensure "Who has access" is set to "Anyone".');
         }
-        throw new Error('Invalid JSON response: ' + raw.slice(0, 100));
+        throw new Error('Invalid response from server: ' + raw.slice(0, 100));
       }
+
+      // Check ok:false cleanly outside of JSON.parse try-block
+      if(data && data.ok === false) {
+        throw new Error(data.error || 'Server error');
+      }
+      return data;
     });
 }
 
@@ -2416,7 +2465,7 @@ function renderLocalCategoryResults(data, category, label){
       className: 'cat-local-marker',
       html: '<div style="position:relative;width:30px;height:36px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.3));">' +
         '<svg width="30" height="36" viewBox="0 0 30 36" fill="none">' +
-          '<path d="M15 0C6.7 0 0 6.7 0 15C0 24.3 12.8 34.8 14.2 35.8C14.7 36.1 15.3 36.1 15.8 35.8C17.2 34.8 30 24.3 30 15C30 6.7 23.3 0 15 0Z" fill="#ea4335"/>' +
+          '<path d="M15 0C6.7 0 0 6.7 0 15C0 24.3 12.8 34.8 14.2 35.8C15.7 36.1 16.3 36.1 16.8 35.8C18.2 34.8 31 24.3 31 15C31 6.7 24.3 0 15 0Z" fill="#ea4335"/>' +
           '<circle cx="15" cy="15" r="11" fill="#ffffff"/>' +
         '</svg>' +
         '<span style="position:absolute;top:5px;font-size:12px;">' + iconChar + '</span>' +
@@ -3353,7 +3402,6 @@ function initPWA(){
 
   if(!isStandalone){
     if(isIos){
-      // On iOS, show install button that presents step-by-step Add to Home Screen instructions
       if(btnBar) btnBar.style.display = 'inline-flex';
       if(btnSettings) btnSettings.style.display = 'block';
     }
