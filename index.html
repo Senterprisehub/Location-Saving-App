@@ -476,17 +476,6 @@ body {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
-.pwa-install-badge {
-  font-size: 10px;
-  background: var(--success-soft);
-  color: var(--success);
-  padding: 2px 7px;
-  border-radius: 12px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 .search-empty {
   padding: 16px;
   font-size: 12px;
@@ -1343,7 +1332,7 @@ input:focus, textarea:focus, select:focus {
       <div class="hint">This script manages <code>Saved address/saved_address.json</code> in your Google Drive.</div>
     </div>
 
-    <!-- Step 2: 10-Step Interactive Deployment Guide (Collapsed by default) -->
+    <!-- Step 2: 10-Step Interactive Deployment Guide -->
     <div class="collapsible-guide" id="deployGuide">
       <div class="guide-header" id="deployGuideHeader">
         <div class="title"><span style="color:var(--primary);font-weight:800;margin-right:6px;">2.</span> Deployment Guide (10 Steps)</div>
@@ -1387,7 +1376,7 @@ input:focus, textarea:focus, select:focus {
               </div>
               <div class="callout warn">
                 <span>⚠️</span>
-                <div><b>Mandatory Setting</b>"Who has access" MUST be set to <b>Anyone</b> so the tracker can sync without OAuth redirects.</div>
+                <div><b>Mandatory Setting</b>"Who has access" MUST be set to <b>Anyone</b> so the tracker can sync without OAuth login redirects.</div>
               </div>
             </div>
             <div class="step">
@@ -1444,7 +1433,6 @@ input:focus, textarea:focus, select:focus {
     <!-- Local Backup & Restore -->
     <div class="panel">
       <h3>Local Data Tools</h3>
-      <button id="btnPwaInstallSettings" class="block" style="display:none;background:var(--success);margin-bottom:8px;">📲 Install as Web App (PWA)</button>
       <button id="btnExportLocal" class="ghost block">⬇️ Export Local JSON</button>
       <button id="btnImportLocalTrigger" class="secondary block">📁 Import JSON File</button>
       <input type="file" id="localFileInput" accept=".json,application/json" style="display:none;" />
@@ -1453,6 +1441,7 @@ input:focus, textarea:focus, select:focus {
   </section>
 </aside>
 
+<!-- Modal: Save / Edit Location -->
 <div class="modal-overlay" id="locationModal">
   <div class="modal-card">
     <div class="modal-header">
@@ -1484,6 +1473,7 @@ input:focus, textarea:focus, select:focus {
   </div>
 </div>
 
+<!-- Modal: Confirm Delete -->
 <div class="modal-overlay" id="confirmModal">
   <div class="modal-card" style="max-width:360px;">
     <div class="modal-header">
@@ -1500,69 +1490,42 @@ input:focus, textarea:focus, select:focus {
   </div>
 </div>
 
-<div class="modal-overlay" id="iosPwaModal">
-  <div class="modal-card" style="max-width:380px;">
-    <div class="modal-header">
-      <div class="modal-title">Install on iOS / Safari</div>
-      <button class="modal-close" id="iosPwaClose">×</button>
-    </div>
-    <div class="modal-body" style="font-size:13px;color:var(--text-muted);line-height:1.6;">
-      <p style="margin-bottom:12px;color:var(--text);font-weight:600;">To install this app on your iPhone or iPad:</p>
-      <ol style="padding-left:20px;display:flex;flex-direction:column;gap:8px;">
-        <li>Tap the <b>Share button</b> ( <span style="font-size:16px;">⎋</span> or box with arrow ) at the bottom of Safari.</li>
-        <li>Scroll down and select <b>Add to Home Screen</b> ( ➕ ).</li>
-        <li>Tap <b>Add</b> in the top right corner.</li>
-      </ol>
-      <div class="callout info" style="margin-top:14px;">
-        <span>💡</span>
-        <div>The app will launch in full-screen standalone mode without any browser URL bar.</div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button id="iosPwaGotIt" class="block">Got It</button>
-    </div>
-  </div>
-</div>
-
 <div id="toast"></div>
 
-<!-- Universal, resilient Apps Script source code with multi-format fallback parsing -->
+<!-- Universal Google Apps Script code for Drive file sync -->
 <script type="text/plain" id="appsScriptSource">
 const FOLDER_NAME = 'Saved address';
 const FILE_NAME   = 'saved_address.json';
 
-function doPost(e) { return handle(e); }
 function doGet(e)  { return handle(e); }
+function doPost(e) { return handle(e); }
 
 function handle(e) {
   try {
     var action = null, body = {};
 
-    // 1. Check URL parameters / standard parsed form parameters
-    if (e && e.parameter && e.parameter.action) {
-      action = e.parameter.action;
+    // 1. Check e.parameter (populated by GET query string or form data)
+    if (e && e.parameter) {
+      if (e.parameter.action) action = e.parameter.action;
       if (e.parameter.payload) {
         try {
           body = typeof e.parameter.payload === 'string' ? JSON.parse(e.parameter.payload) : e.parameter.payload;
         } catch (_) {
-          body = {};
+          body = e.parameter.payload;
         }
       }
     }
 
-    // 2. Fallback: Parse postData.contents if action not yet detected or if payload is in POST body
-    if (e && e.postData && e.postData.contents) {
+    // 2. Check e.postData.contents (for raw JSON or urlencoded POST bodies)
+    if ((!action || action === 'null') && e && e.postData && e.postData.contents) {
       var raw = e.postData.contents;
-
-      // Try raw JSON parse: {"action":"save","payload":{...}}
       try {
         var parsedJson = JSON.parse(raw);
-        if (parsedJson) {
-          if (!action && parsedJson.action) action = parsedJson.action;
+        if (parsedJson && parsedJson.action) {
+          action = parsedJson.action;
           if (parsedJson.payload !== undefined) body = parsedJson.payload;
         }
       } catch (_) {
-        // Try urlencoded form string parse: action=load&payload=...
         try {
           var pairs = raw.split('&');
           for (var i = 0; i < pairs.length; i++) {
@@ -1578,6 +1541,11 @@ function handle(e) {
           }
         } catch (_) {}
       }
+    }
+
+    // 3. Fallback: default to load for GET or save for POST
+    if (!action || action === 'null' || action === 'undefined') {
+      action = (e && e.postData && e.postData.contents) ? 'save' : 'load';
     }
 
     var result;
@@ -1800,50 +1768,72 @@ function updateStatus(){
 }
 
 /**
- * Universal bridge caller with dual parameter passing:
- * 1. Appends action to URL query string (?action=...) ensuring Apps Script receives it
- *    even across 302 redirects without dropping.
- * 2. Appends action and payload to POST body for rich payloads.
+ * Universal bridge caller:
+ * - Read requests ('ping', 'load') are sent via clean GET with query parameters.
+ * - Write requests ('save', 'echo') are sent via clean POST to the base URL (avoiding 404 proxy rejection).
  */
 function callBridge(action, payload){
   if(!state.scriptUrl) return Promise.reject(new Error('Script URL is empty'));
 
-  // Dual-append: ensures e.parameter.action is guaranteed even if POST body drops on 302 redirect
-  var sep = state.scriptUrl.indexOf('?') >= 0 ? '&' : '?';
-  var targetUrl = state.scriptUrl + sep + 'action=' + encodeURIComponent(action);
+  // Clean the base URL (strip whitespace, trailing slashes, and existing query params)
+  var cleanUrl = state.scriptUrl.trim().replace(/\/+$/, '');
+  var qIdx = cleanUrl.indexOf('?');
+  if(qIdx >= 0) cleanUrl = cleanUrl.substring(0, qIdx);
 
+  // READ requests: use GET with query parameters
+  if(action === 'ping' || action === 'load'){
+    var getUrl = cleanUrl + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
+    return fetch(getUrl, { method: 'GET' }).then(handleBridgeResponse);
+  }
+
+  // WRITE requests: use POST directly to cleanUrl WITHOUT query string on the URL
   var params = new URLSearchParams();
   params.append('action', action);
   if(payload !== undefined) {
     params.append('payload', typeof payload === 'string' ? payload : JSON.stringify(payload));
   }
 
-  return fetch(targetUrl, { method:'POST', body:params })
-    .then(function(res){
-      if(!res.ok) throw new Error('HTTP status ' + res.status);
-      return res.text();
-    })
-    .then(function(raw){
-      var data;
-      try {
-        data = JSON.parse(raw);
-      } catch(parseErr){
-        if(/accounts\.google\.com/i.test(raw)) {
-          throw new Error('Script permission issue: ensure "Who has access" is set to "Anyone".');
-        }
-        throw new Error('Invalid response from server: ' + raw.slice(0, 100));
-      }
+  return fetch(cleanUrl, {
+    method: 'POST',
+    body: params
+  }).then(handleBridgeResponse);
+}
 
-      // Check ok:false cleanly outside of JSON.parse try-block
-      if(data && data.ok === false) {
-        throw new Error(data.error || 'Server error');
+function handleBridgeResponse(res){
+  if(!res.ok){
+    if(res.status === 404){
+      throw new Error('HTTP status 404: Web App URL not found. Ensure your deployment ends with /exec and was not deleted in Apps Script.');
+    }
+    throw new Error('HTTP status ' + res.status);
+  }
+  return res.text().then(function(raw){
+    var trimmed = (raw || '').trim();
+    if(trimmed.charAt(0) !== '{' && trimmed.charAt(0) !== '['){
+      if(/accounts\.google\.com|ServiceLogin/i.test(raw)){
+        throw new Error('Script permission issue: ensure "Who has access" is set to "Anyone" in Web App deployment.');
       }
-      return data;
-    });
+      if(/<!DOCTYPE|<html/i.test(raw)){
+        throw new Error('Google returned HTML instead of JSON. Check deployment settings ("Who has access: Anyone").');
+      }
+    }
+    var data;
+    try {
+      data = JSON.parse(raw);
+    } catch(parseErr){
+      throw new Error('Invalid response from server: ' + raw.slice(0, 100));
+    }
+    if(data && data.ok === false){
+      throw new Error(data.error || 'Server error');
+    }
+    return data;
+  });
 }
 
 function pushToDrive(silent){
-  if(!state.scriptUrl) return Promise.resolve();
+  if(!state.scriptUrl){
+    if(!silent) toast('Please configure and save your Web App URL first');
+    return Promise.resolve();
+  }
 
   if(state.busy){
     state.syncPendingAfterBusy = true;
@@ -1894,7 +1884,7 @@ function pullFromDrive(){
   callBridge('load')
     .then(function(res){
       if(!res.found || !res.data){
-        toast('No saved file found in Drive yet');
+        toast('No saved file found in Drive yet (Sync first to create it)');
         return;
       }
       var remote = res.data.locations || [];
@@ -3034,7 +3024,6 @@ function initMapControls(){
       tileLayers[key].addTo(map);
       currentTileLayer = key;
 
-      // Show/hide live traffic status badge
       if(trafficBadge){
         trafficBadge.style.display = (key === 'traffic') ? 'flex' : 'none';
       }
@@ -3115,6 +3104,7 @@ function initSettingsUI(){
     if(v.includes('/dev')) toast('Notice: using /dev test URL. /exec is recommended for production.');
     state.scriptUrl = v;
     localStorage.setItem(CONFIG.LS_URL, v);
+    state.busy = false;
     updateStatus();
     toast('Script URL saved — syncing');
     pushToDrive(false);
@@ -3122,7 +3112,10 @@ function initSettingsUI(){
 
   $('#btnOpenInBrowser').addEventListener('click', function(){
     if(!state.scriptUrl) return toast('Save a Script URL first');
-    window.open(state.scriptUrl + '?action=ping', '_blank', 'noopener');
+    var cleanUrl = state.scriptUrl.trim().replace(/\/+$/, '');
+    var qIdx = cleanUrl.indexOf('?');
+    if(qIdx >= 0) cleanUrl = cleanUrl.substring(0, qIdx);
+    window.open(cleanUrl + '?action=ping', '_blank', 'noopener');
   });
 
   $('#autoSync').checked = state.autoSync;
@@ -3133,12 +3126,21 @@ function initSettingsUI(){
     if(state.autoSync && state.scriptUrl) scheduleAutoPush();
   });
 
-  $('#btnSync').addEventListener('click', function(){ pushToDrive(false); });
-  $('#btnImport').addEventListener('click', function(){ pullFromDrive(); });
+  // Manual buttons reset any busy locks on click to ensure immediate action
+  $('#btnSync').addEventListener('click', function(){
+    state.busy = false;
+    pushToDrive(false);
+  });
+  
+  $('#btnImport').addEventListener('click', function(){
+    state.busy = false;
+    pullFromDrive();
+  });
 
   $('#btnDisconnect').addEventListener('click', function(){
     openConfirmModal('Disconnect Script', 'Clear the saved Web App URL?', function(){
       state.scriptUrl = '';
+      state.busy = false;
       localStorage.removeItem(CONFIG.LS_URL);
       $('#scriptUrlInput').value = '';
       updateStatus();
@@ -3234,12 +3236,12 @@ function runDiagnostics(){
 
   callBridge('ping')
     .then(function(res){
-      log(true, 'Ping Web App', res.message || 'Connected OK');
+      log(true, 'Ping Web App (GET)', res.message || 'Connected OK');
       return callBridge('echo', { test: 123 });
     })
     .then(function(res){
       var ok = res.echoed && res.echoed.test === 123;
-      log(ok ? true : false, 'Round-trip Echo Test', ok ? 'Payload delivered & returned' : 'Echo mismatch');
+      log(ok ? true : false, 'Round-trip Echo Test (POST)', ok ? 'Payload delivered & returned' : 'Echo mismatch');
       return callBridge('load');
     })
     .then(function(res){
@@ -3247,9 +3249,9 @@ function runDiagnostics(){
         var n = res.data && res.data.locations ? res.data.locations.length : 0;
         log(true, 'Google Drive Access', 'Found saved_address.json with ' + n + ' locations.');
       } else {
-        log('warn', 'Google Drive Access', 'Bridge works! File not created yet — press "Sync to Google Drive" to create it.');
+        log('warn', 'Google Drive Access', 'Bridge works! File not created in Drive yet — press "Sync to Google Drive" to create it.');
       }
-      toast('✅ Diagnostics passed!');
+      toast('✅ All diagnostics passed!');
     })
     .catch(function(err){
       log(false, 'Connectivity Error', err.message);
@@ -3272,15 +3274,12 @@ function renderDiag(rows){
   }).join('');
 }
 
-var deferredPwaPrompt = null;
-
 function generateAppIcon(size){
   var canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   var ctx = canvas.getContext('2d');
 
-  // Background rounded rect
   var radius = size * 0.22;
   ctx.fillStyle = '#1a73e8';
   ctx.beginPath();
@@ -3296,26 +3295,22 @@ function generateAppIcon(size){
   ctx.closePath();
   ctx.fill();
 
-  // Radar ring
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
   ctx.lineWidth = size * 0.04;
   ctx.beginPath();
   ctx.arc(size / 2, size * 0.42, size * 0.28, 0, 2 * Math.PI);
   ctx.stroke();
 
-  // Pin head
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   ctx.arc(size / 2, size * 0.42, size * 0.17, 0, 2 * Math.PI);
   ctx.fill();
 
-  // Center pupil
   ctx.fillStyle = '#ea4335';
   ctx.beginPath();
   ctx.arc(size / 2, size * 0.42, size * 0.08, 0, 2 * Math.PI);
   ctx.fill();
 
-  // Pin tip
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   ctx.moveTo(size * 0.36, size * 0.48);
@@ -3328,14 +3323,12 @@ function generateAppIcon(size){
 }
 
 function initPWA(){
-  // 1. Generate multi-resolution icons & Apple touch icon
   var icon192 = generateAppIcon(192);
   var icon512 = generateAppIcon(512);
 
   var appleIcon = $('#appleTouchIcon');
   if(appleIcon) appleIcon.href = icon192;
 
-  // 2. Build Web App Manifest & inject via Blob URL
   var manifestObj = {
     name: 'Location Tracker & Drive Sync',
     short_name: 'LocTracker',
@@ -3360,92 +3353,6 @@ function initPWA(){
   } catch(e){
     console.warn('Manifest Blob creation error:', e);
   }
-
-  // 3. Inline Service Worker with Cache-First strategy for app shell
-  if('serviceWorker' in navigator){
-    var swCode = "const CACHE_NAME = 'loctracker-sw-v1';\n" +
-      "self.addEventListener('install', (e) => { self.skipWaiting(); });\n" +
-      "self.addEventListener('activate', (e) => { e.waitUntil(clients.claim()); });\n" +
-      "self.addEventListener('fetch', (e) => {\n" +
-      "  if (e.request.method !== 'GET') return;\n" +
-      "  if (!e.request.url.startsWith('http')) return;\n" +
-      "  e.respondWith(\n" +
-      "    caches.match(e.request).then((cached) => {\n" +
-      "      if (cached) return cached;\n" +
-      "      return fetch(e.request).then((res) => {\n" +
-      "        if (!res || res.status !== 200 || res.type === 'opaque') return res;\n" +
-      "        const clone = res.clone();\n" +
-      "        caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));\n" +
-      "        return res;\n" +
-      "      }).catch(() => cached);\n" +
-      "    })\n" +
-      "  );\n" +
-      "});";
-
-    try {
-      var swBlob = new Blob([swCode], { type: 'text/javascript' });
-      var swUrl = URL.createObjectURL(swBlob);
-      navigator.serviceWorker.register(swUrl).catch(function(err){
-        console.debug('Service Worker registration skipped:', err);
-      });
-    } catch(err){
-      console.debug('Service worker blob error:', err);
-    }
-  }
-
-  // 4. Install Prompt Event Handlers
-  var btnBar = $('#btnPwaInstall');
-  var btnSettings = $('#btnPwaInstallSettings');
-  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-  var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-  if(!isStandalone){
-    if(isIos){
-      if(btnBar) btnBar.style.display = 'inline-flex';
-      if(btnSettings) btnSettings.style.display = 'block';
-    }
-
-    window.addEventListener('beforeinstallprompt', function(e){
-      e.preventDefault();
-      deferredPwaPrompt = e;
-      if(btnBar) btnBar.style.display = 'inline-flex';
-      if(btnSettings) btnSettings.style.display = 'block';
-    });
-  }
-
-  function handleInstallClick(){
-    if(deferredPwaPrompt){
-      deferredPwaPrompt.prompt();
-      deferredPwaPrompt.userChoice.then(function(choice){
-        if(choice.outcome === 'accepted'){
-          toast('Installing Location Tracker…');
-        }
-        deferredPwaPrompt = null;
-        if(btnBar) btnBar.style.display = 'none';
-        if(btnSettings) btnSettings.style.display = 'none';
-      });
-    } else if(isIos){
-      var modal = $('#iosPwaModal');
-      if(modal) modal.classList.add('open');
-    } else {
-      toast('To install: click your browser menu (⋮ or ⊕) → "Install app"');
-    }
-  }
-
-  if(btnBar) btnBar.addEventListener('click', handleInstallClick);
-  if(btnSettings) btnSettings.addEventListener('click', handleInstallClick);
-
-  var iosClose = $('#iosPwaClose'), iosGotIt = $('#iosPwaGotIt'), iosModal = $('#iosPwaModal');
-  if(iosClose && iosModal) iosClose.addEventListener('click', function(){ iosModal.classList.remove('open'); });
-  if(iosGotIt && iosModal) iosGotIt.addEventListener('click', function(){ iosModal.classList.remove('open'); });
-
-  window.addEventListener('appinstalled', function(){
-    deferredPwaPrompt = null;
-    if(btnBar) btnBar.style.display = 'none';
-    if(btnSettings) btnSettings.style.display = 'none';
-    toast('🎉 Location Tracker installed successfully!');
-  });
 }
 
 function initTabs(){
