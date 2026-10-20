@@ -1498,50 +1498,67 @@ input:focus, textarea:focus, select:focus {
 const FOLDER_NAME = 'Saved address';
 const FILE_NAME   = 'saved_address.json';
 
-function doGet(e)  { return handle(e); }
-function doPost(e) { return handle(e); }
+function doGet(e)  { return handleRequest(e); }
+function doPost(e) { return handleRequest(e); }
 
-function handle(e) {
+function handleRequest(e) {
   try {
-    var action = null, body = {};
+    var action = null;
+    var payload = {};
 
+    // 1. Try reading from GET query parameters
     if (e && e.parameter) {
       if (e.parameter.action) action = e.parameter.action;
       if (e.parameter.payload) {
         try {
-          body = typeof e.parameter.payload === 'string' ? JSON.parse(e.parameter.payload) : e.parameter.payload;
+          payload = typeof e.parameter.payload === 'string' ? JSON.parse(e.parameter.payload) : e.parameter.payload;
         } catch (_) {
-          body = e.parameter.payload;
+          payload = e.parameter.payload;
         }
       }
     }
 
-    if ((!action || action === 'null') && e && e.postData && e.postData.contents) {
+    // 2. Try reading from POST body (JSON, text/plain, or form-urlencoded)
+    if (e && e.postData && e.postData.contents) {
       var raw = e.postData.contents;
+      var parsed = null;
       try {
-        var parsedJson = JSON.parse(raw);
-        if (parsedJson && parsedJson.action) {
-          action = parsedJson.action;
-          if (parsedJson.payload !== undefined) body = parsedJson.payload;
-        }
+        parsed = JSON.parse(raw);
       } catch (_) {
+        // Not direct JSON, attempt url-encoded key-value parsing
         try {
           var pairs = raw.split('&');
+          parsed = {};
           for (var i = 0; i < pairs.length; i++) {
             var kv = pairs[i].split('=');
             if (kv.length >= 2) {
               var k = decodeURIComponent(kv[0].replace(/\+/g, ' '));
               var v = decodeURIComponent(kv.slice(1).join('=').replace(/\+/g, ' '));
-              if (k === 'action' && !action) action = v;
-              if (k === 'payload') {
-                try { body = JSON.parse(v); } catch (_) { body = v; }
-              }
+              parsed[k] = v;
             }
           }
         } catch (_) {}
       }
+
+      if (parsed) {
+        if (parsed.action) action = parsed.action;
+        if (parsed.payload !== undefined) {
+          if (typeof parsed.payload === 'string') {
+            try { payload = JSON.parse(parsed.payload); } catch (_) { payload = parsed.payload; }
+          } else {
+            payload = parsed.payload;
+          }
+        } else if (!action) {
+          // If the parsed object itself has locations/app data, treat as save
+          if (parsed.locations || parsed.app) {
+            action = 'save';
+            payload = parsed;
+          }
+        }
+      }
     }
 
+    // Default action fallback
     if (!action || action === 'null' || action === 'undefined') {
       action = (e && e.postData && e.postData.contents) ? 'save' : 'load';
     }
@@ -1549,16 +1566,16 @@ function handle(e) {
     var result;
     switch (action) {
       case 'ping':
-        result = { ok: true, message: 'Connected to Drive bridge', version: 4 };
+        result = { ok: true, message: 'Connected to Drive bridge', version: 5 };
         break;
       case 'echo':
-        result = { ok: true, echoed: body };
+        result = { ok: true, echoed: payload };
         break;
       case 'save':
-        result = saveDataSafe(body);
+        result = saveDataSafe(payload);
         break;
       case 'delete_location':
-        result = explicitDelete(body);
+        result = explicitDelete(payload);
         break;
       case 'load':
         result = loadData();
@@ -1566,13 +1583,13 @@ function handle(e) {
       default:
         result = { ok: false, error: 'Unknown action: ' + action };
     }
-    return out(result);
+    return respondJson(result);
   } catch (err) {
-    return out({ ok: false, error: String(err && err.message ? err.message : err) });
+    return respondJson({ ok: false, error: String(err && err.message ? err.message : err) });
   }
 }
 
-function out(obj) {
+function respondJson(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
@@ -1619,7 +1636,7 @@ function saveDataSafe(payload) {
 
   var finalData = {
     app: 'MyLocationTracker',
-    version: 4,
+    version: 5,
     gmail: (payload && payload.gmail) || currentStored.gmail || null,
     updatedAt: new Date().toISOString(),
     locations: mergedLocations
@@ -1693,7 +1710,6 @@ function getOrCreateFolder() {
   return it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
 }
 </script>
-
 <script>
 (function(){
 'use strict';
@@ -1880,9 +1896,10 @@ function updateStatus(){
 }
 
 /**
- * Universal bridge caller:
- * GET for reads ('ping', 'load')
- * POST for writes ('save', 'delete_location')
+ * Universal bridge caller with redirect-safe transmission:
+ * Reads ('ping', 'load') use GET.
+ * Writes ('save', 'echo', 'delete_location') use POST with text/plain body.
+ * This prevents mobile browser redirects from stripping the body or yielding 404s.
  */
 function callBridge(action, payload){
   if(!state.scriptUrl) return Promise.reject(new Error('Script URL is empty'));
@@ -1891,48 +1908,70 @@ function callBridge(action, payload){
   var qIdx = cleanUrl.indexOf('?');
   if(qIdx >= 0) cleanUrl = cleanUrl.substring(0, qIdx);
 
+  // 1. Read operations: GET with clean URL query string
   if(action === 'ping' || action === 'load'){
     var getUrl = cleanUrl + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
-    return fetch(getUrl, { method: 'GET' }).then(handleBridgeResponse);
+    return fetch(getUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    }).then(handleBridgeResponse);
   }
 
-  var params = new URLSearchParams();
-  params.append('action', action);
-  if(payload !== undefined) {
-    params.append('payload', typeof payload === 'string' ? payload : JSON.stringify(payload));
-  }
+  // 2. Write operations: POST using text/plain JSON payload
+  // text/plain avoids CORS preflight OPTIONS rejection by Apps Script & preserves body across 302 redirects
+  var bodyData = JSON.stringify({
+    action: action,
+    payload: payload !== undefined ? payload : {}
+  });
 
   return fetch(cleanUrl, {
     method: 'POST',
-    body: params
-  }).then(handleBridgeResponse);
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8',
+      'Accept': 'application/json'
+    },
+    body: bodyData
+  })
+  .then(handleBridgeResponse)
+  .catch(function(err){
+    // Automatic fallback for restrictive environments:
+    // If POST fails due to network/gateway, attempt GET with serialized payload if small enough
+    if(action === 'echo' || action === 'delete_location'){
+      var fallbackUrl = cleanUrl + '?action=' + encodeURIComponent(action) +
+        '&payload=' + encodeURIComponent(typeof payload === 'string' ? payload : JSON.stringify(payload || {})) +
+        '&_t=' + Date.now();
+      return fetch(fallbackUrl, { method: 'GET', headers: { 'Accept': 'application/json' } })
+        .then(handleBridgeResponse);
+    }
+    throw err;
+  });
 }
 
 function handleBridgeResponse(res){
   if(!res.ok){
     if(res.status === 404){
-      throw new Error('HTTP 404: Script not deployed or URL invalid. Ensure it ends in /exec.');
+      throw new Error('HTTP 404: Web App not found. In Apps Script, click Deploy -> New deployment -> Web app, set "Who has access: Anyone", and copy the new /exec URL.');
     }
-    throw new Error('HTTP status ' + res.status);
+    throw new Error('HTTP ' + res.status);
   }
   return res.text().then(function(raw){
     var trimmed = (raw || '').trim();
     if(trimmed.charAt(0) !== '{' && trimmed.charAt(0) !== '['){
       if(/accounts\.google\.com|ServiceLogin/i.test(raw)){
-        throw new Error('Permissions issue: Set "Who has access" to "Anyone" in Web App deployment.');
+        throw new Error('Permission denied: Set "Who has access" to "Anyone" in Web App deployment.');
       }
       if(/<!DOCTYPE|<html/i.test(raw)){
-        throw new Error('Google returned HTML. Check deployment settings ("Who has access: Anyone").');
+        throw new Error('Google returned HTML instead of JSON. Ensure "Who has access: Anyone" is selected in your deployment.');
       }
     }
     var data;
     try {
       data = JSON.parse(raw);
     } catch(parseErr){
-      throw new Error('Invalid response from server: ' + raw.slice(0, 100));
+      throw new Error('Unexpected response format: ' + raw.slice(0, 100));
     }
     if(data && data.ok === false){
-      throw new Error(data.error || 'Server error');
+      throw new Error(data.error || 'Server returned an error');
     }
     return data;
   });
@@ -1955,11 +1994,11 @@ function pushToDrive(silent){
 
   var payload = {
     app: 'MyLocationTracker',
-    version: 4,
+    version: 5,
     gmail: state.gmail || null,
     updatedAt: new Date().toISOString(),
     locations: state.locations,
-    deletedIds: state.deletedTombstones // Explicit tombstones only
+    deletedIds: state.deletedTombstones
   };
 
   return callBridge('save', payload)
@@ -1969,7 +2008,6 @@ function pushToDrive(silent){
       }
       state.lastSync = new Date().toISOString();
       localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
-      // Once acknowledged by Drive, flush processed tombstones
       state.deletedTombstones = [];
       saveLocations();
       if(!silent) toast('☁️ Synced ' + state.locations.length + ' pins to Drive (Protected)');
@@ -3401,14 +3439,17 @@ function runDiagnostics(){
     log(true, 'Deployment Endpoint', 'Correct /exec endpoint.');
   }
 
+  // 1. GET Ping test
   callBridge('ping')
     .then(function(res){
       log(true, 'Ping Web App (GET)', res.message || 'Connected OK');
+      // 2. POST Echo test
       return callBridge('echo', { test: 123 });
     })
     .then(function(res){
       var ok = res.echoed && res.echoed.test === 123;
-      log(ok ? true : false, 'Round-trip Echo Test (POST)', ok ? 'Payload delivered & returned' : 'Echo mismatch');
+      log(ok ? true : false, 'Round-trip Echo Test (POST)', ok ? 'Payload delivered & returned via POST' : 'Echo mismatch');
+      // 3. GET Load test
       return callBridge('load');
     })
     .then(function(res){
