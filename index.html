@@ -1207,7 +1207,7 @@ input:focus, textarea:focus, select:focus {
     <button class="map-btn-icon" id="btnFitAll" title="Fit All Saved Pins">📍</button>
   </div>
 
-  <!-- Layer Select Menu: Google Classic + Live Traffic Default -->
+  <!-- Layer Select Menu -->
   <div class="layer-menu" id="layerMenu">
     <div class="layer-menu-title">
       <span>Map Style</span>
@@ -1311,7 +1311,7 @@ input:focus, textarea:focus, select:focus {
       <h3>Gmail Account</h3>
       <input type="email" id="gmailInput" placeholder="you@gmail.com" autocomplete="email" />
       <button id="btnSaveGmail" class="secondary block">Save Gmail ID</button>
-      <div class="hint">Stored locally and embedded in the Drive JSON payload.</div>
+      <div class="hint">Stored permanently across reboots and embedded in your Drive JSON.</div>
     </div>
 
     <!-- Step 1: Apps Script Code -->
@@ -1329,7 +1329,7 @@ input:focus, textarea:focus, select:focus {
         <div class="code-body" id="codeBody"><pre><code id="appsScriptCode"></code></pre></div>
         <div class="code-toggle" id="codeToggle"><span>Show / Hide Code</span><span class="chev">▼</span></div>
       </div>
-      <div class="hint">This script manages <code>Saved address/saved_address.json</code> in your Google Drive.</div>
+      <div class="hint">Includes non-destructive merger and explicit deletion protection for Drive.</div>
     </div>
 
     <!-- Step 2: 10-Step Interactive Deployment Guide -->
@@ -1428,6 +1428,7 @@ input:focus, textarea:focus, select:focus {
       <h3>Cloud Info</h3>
       <div class="info-card"><span class="k">Target File</span><span class="v">Saved address / saved_address.json</span></div>
       <div class="info-card"><span class="k">Last Sync</span><span class="v" id="lastSyncTime">Never</span></div>
+      <div class="info-card"><span class="k">Drive Protection</span><span class="v" style="color:var(--success);font-weight:700;">Active (No auto-delete)</span></div>
     </div>
 
     <!-- Local Backup & Restore -->
@@ -1436,7 +1437,7 @@ input:focus, textarea:focus, select:focus {
       <button id="btnExportLocal" class="ghost block">⬇️ Export Local JSON</button>
       <button id="btnImportLocalTrigger" class="secondary block">📁 Import JSON File</button>
       <input type="file" id="localFileInput" accept=".json,application/json" style="display:none;" />
-      <button id="btnClearLocal" class="danger block">🗑️ Clear All Local Data</button>
+      <button id="btnClearLocal" class="danger block">🗑️ Reset Local Cache (Preserves Drive)</button>
     </div>
   </section>
 </aside>
@@ -1492,7 +1493,7 @@ input:focus, textarea:focus, select:focus {
 
 <div id="toast"></div>
 
-<!-- Universal Google Apps Script code for Drive file sync -->
+<!-- Universal Google Apps Script code with STRICT deletion protection -->
 <script type="text/plain" id="appsScriptSource">
 const FOLDER_NAME = 'Saved address';
 const FILE_NAME   = 'saved_address.json';
@@ -1504,7 +1505,6 @@ function handle(e) {
   try {
     var action = null, body = {};
 
-    // 1. Check e.parameter (populated by GET query string or form data)
     if (e && e.parameter) {
       if (e.parameter.action) action = e.parameter.action;
       if (e.parameter.payload) {
@@ -1516,7 +1516,6 @@ function handle(e) {
       }
     }
 
-    // 2. Check e.postData.contents (for raw JSON or urlencoded POST bodies)
     if ((!action || action === 'null') && e && e.postData && e.postData.contents) {
       var raw = e.postData.contents;
       try {
@@ -1543,7 +1542,6 @@ function handle(e) {
       }
     }
 
-    // 3. Fallback: default to load for GET or save for POST
     if (!action || action === 'null' || action === 'undefined') {
       action = (e && e.postData && e.postData.contents) ? 'save' : 'load';
     }
@@ -1551,13 +1549,16 @@ function handle(e) {
     var result;
     switch (action) {
       case 'ping':
-        result = { ok: true, message: 'Connected to Drive bridge', version: 3 };
+        result = { ok: true, message: 'Connected to Drive bridge', version: 4 };
         break;
       case 'echo':
         result = { ok: true, echoed: body };
         break;
       case 'save':
-        result = saveData(body);
+        result = saveDataSafe(body);
+        break;
+      case 'delete_location':
+        result = explicitDelete(body);
         break;
       case 'load':
         result = loadData();
@@ -1576,19 +1577,100 @@ function out(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function saveData(payload) {
+/**
+ * Non-destructive Save:
+ * Merges incoming locations with existing stored locations in Drive.
+ * Existing locations are NEVER auto-deleted unless explicit delete action is received.
+ */
+function saveDataSafe(payload) {
   var folder = getOrCreateFolder();
-  var existing = folder.getFilesByName(FILE_NAME);
-  var content = JSON.stringify(payload, null, 2);
-  if (existing.hasNext()) {
-    existing.next().setContent(content);
+  var existingFile = folder.getFilesByName(FILE_NAME);
+  var currentStored = { locations: [], gmail: null };
+
+  if (existingFile.hasNext()) {
+    try {
+      var existingJson = JSON.parse(existingFile.next().getBlob().getDataAsString());
+      if (existingJson && Array.isArray(existingJson.locations)) {
+        currentStored = existingJson;
+      }
+    } catch (_) {}
+  }
+
+  var incomingList = (payload && Array.isArray(payload.locations)) ? payload.locations : [];
+  var incomingDeletedIds = (payload && Array.isArray(payload.deletedIds)) ? payload.deletedIds : [];
+
+  var mapLocations = {};
+  (currentStored.locations || []).forEach(function(item) {
+    if (item && item.id) mapLocations[item.id] = item;
+  });
+
+  // Apply explicit tombstones only
+  incomingDeletedIds.forEach(function(delId) {
+    delete mapLocations[delId];
+  });
+
+  // Add or update locations
+  incomingList.forEach(function(inc) {
+    if (!inc || !inc.id) return;
+    mapLocations[inc.id] = inc;
+  });
+
+  var mergedLocations = Object.keys(mapLocations).map(function(k) { return mapLocations[k]; });
+
+  var finalData = {
+    app: 'MyLocationTracker',
+    version: 4,
+    gmail: (payload && payload.gmail) || currentStored.gmail || null,
+    updatedAt: new Date().toISOString(),
+    locations: mergedLocations
+  };
+
+  var content = JSON.stringify(finalData, null, 2);
+  var it = folder.getFilesByName(FILE_NAME);
+  if (it.hasNext()) {
+    it.next().setContent(content);
   } else {
     folder.createFile(FILE_NAME, content, 'application/json');
   }
+
   return {
     ok: true,
-    count: payload && payload.locations ? payload.locations.length : 0,
-    savedAt: new Date().toISOString()
+    count: mergedLocations.length,
+    savedAt: finalData.updatedAt
+  };
+}
+
+/**
+ * Explicit user deletion: removes one targeted location by ID
+ */
+function explicitDelete(payload) {
+  var deleteId = payload && payload.id;
+  if (!deleteId) return { ok: false, error: 'No ID specified for deletion' };
+
+  var folder = getOrCreateFolder();
+  var existingFile = folder.getFilesByName(FILE_NAME);
+  if (!existingFile.hasNext()) return { ok: true, count: 0 };
+
+  var file = existingFile.next();
+  var data = {};
+  try {
+    data = JSON.parse(file.getBlob().getDataAsString());
+  } catch (e) {
+    return { ok: false, error: 'Corrupt Drive file' };
+  }
+
+  var list = Array.isArray(data.locations) ? data.locations : [];
+  var beforeCount = list.length;
+  data.locations = list.filter(function(l) { return l && l.id !== deleteId; });
+  data.updatedAt = new Date().toISOString();
+
+  file.setContent(JSON.stringify(data, null, 2));
+
+  return {
+    ok: true,
+    deleted: deleteId,
+    remaining: data.locations.length,
+    modified: beforeCount !== data.locations.length
   };
 }
 
@@ -1616,17 +1698,23 @@ function getOrCreateFolder() {
 (function(){
 'use strict';
 
+// Permanent Local Storage Keys (Preserved across reboots)
 var CONFIG = {
-  LS_DATA: 'mlt_locations_v3',
-  LS_GMAIL: 'mlt_gmail',
-  LS_AUTO: 'mlt_autosync',
-  LS_SYNC: 'mlt_last_sync',
-  LS_URL: 'mlt_script_url',
-  LS_GUIDE_OPEN: 'mlt_guide_open'
+  LS_DATA: 'mlt_locations_v4',
+  LS_GMAIL: 'mlt_gmail_v4',
+  LS_AUTO: 'mlt_autosync_v4',
+  LS_SYNC: 'mlt_last_sync_v4',
+  LS_URL: 'mlt_script_url_v4',
+  LS_GUIDE_OPEN: 'mlt_guide_open_v4',
+  LS_MAP_LAYER: 'mlt_map_layer_v4',
+  LS_SORT: 'mlt_sort_v4',
+  LS_MAP_CENTER: 'mlt_map_center_v4',
+  LS_DELETED_TOMBSTONES: 'mlt_deleted_tombstones_v4'
 };
 
 var state = {
   locations: [],
+  deletedTombstones: [], // Explicitly deleted by user only
   gmail: '',
   scriptUrl: '',
   autoSync: true,
@@ -1699,26 +1787,50 @@ function formatDist(km){
   return km.toFixed(1) + ' km';
 }
 
-function loadLocal(){
+/**
+ * Load all configuration and preferences from permanent persistent storage
+ * Ensures everything survives device reboots and browser updates
+ */
+function loadAllSettings(){
   try {
     state.locations = JSON.parse(localStorage.getItem(CONFIG.LS_DATA) || '[]');
     if(!Array.isArray(state.locations)) state.locations = [];
   } catch(e){
     state.locations = [];
   }
+
+  try {
+    state.deletedTombstones = JSON.parse(localStorage.getItem(CONFIG.LS_DELETED_TOMBSTONES) || '[]');
+    if(!Array.isArray(state.deletedTombstones)) state.deletedTombstones = [];
+  } catch(e){
+    state.deletedTombstones = [];
+  }
+
   state.gmail = localStorage.getItem(CONFIG.LS_GMAIL) || '';
   state.autoSync = localStorage.getItem(CONFIG.LS_AUTO) !== 'false';
   state.lastSync = localStorage.getItem(CONFIG.LS_SYNC) || null;
   state.scriptUrl = localStorage.getItem(CONFIG.LS_URL) || '';
+  state.activeSort = localStorage.getItem(CONFIG.LS_SORT) || 'newest';
+  currentTileLayer = localStorage.getItem(CONFIG.LS_MAP_LAYER) || 'traffic';
 }
 
-function saveLocal(){
+function saveLocations(){
   localStorage.setItem(CONFIG.LS_DATA, JSON.stringify(state.locations));
+  localStorage.setItem(CONFIG.LS_DELETED_TOMBSTONES, JSON.stringify(state.deletedTombstones));
 }
 
-function commit(msg){
+function saveSetting(key, val){
+  localStorage.setItem(key, val);
+}
+
+function commit(msg, wasExplicitDeleteId){
   state.changeVersion++;
-  saveLocal();
+  if(wasExplicitDeleteId){
+    if(!state.deletedTombstones.includes(wasExplicitDeleteId)){
+      state.deletedTombstones.push(wasExplicitDeleteId);
+    }
+  }
+  saveLocations();
   renderList();
   refreshMarkers();
   state.dirty = true;
@@ -1733,7 +1845,7 @@ function commit(msg){
 var autoPushTimer = null;
 function scheduleAutoPush(){
   clearTimeout(autoPushTimer);
-  autoPushTimer = setTimeout(function(){ pushToDrive(true); }, 500);
+  autoPushTimer = setTimeout(function(){ pushToDrive(true); }, 600);
 }
 
 function updateStatus(){
@@ -1769,24 +1881,21 @@ function updateStatus(){
 
 /**
  * Universal bridge caller:
- * - Read requests ('ping', 'load') are sent via clean GET with query parameters.
- * - Write requests ('save', 'echo') are sent via clean POST to the base URL (avoiding 404 proxy rejection).
+ * GET for reads ('ping', 'load')
+ * POST for writes ('save', 'delete_location')
  */
 function callBridge(action, payload){
   if(!state.scriptUrl) return Promise.reject(new Error('Script URL is empty'));
 
-  // Clean the base URL (strip whitespace, trailing slashes, and existing query params)
   var cleanUrl = state.scriptUrl.trim().replace(/\/+$/, '');
   var qIdx = cleanUrl.indexOf('?');
   if(qIdx >= 0) cleanUrl = cleanUrl.substring(0, qIdx);
 
-  // READ requests: use GET with query parameters
   if(action === 'ping' || action === 'load'){
     var getUrl = cleanUrl + '?action=' + encodeURIComponent(action) + '&_t=' + Date.now();
     return fetch(getUrl, { method: 'GET' }).then(handleBridgeResponse);
   }
 
-  // WRITE requests: use POST directly to cleanUrl WITHOUT query string on the URL
   var params = new URLSearchParams();
   params.append('action', action);
   if(payload !== undefined) {
@@ -1802,7 +1911,7 @@ function callBridge(action, payload){
 function handleBridgeResponse(res){
   if(!res.ok){
     if(res.status === 404){
-      throw new Error('HTTP status 404: Web App URL not found. Ensure your deployment ends with /exec and was not deleted in Apps Script.');
+      throw new Error('HTTP 404: Script not deployed or URL invalid. Ensure it ends in /exec.');
     }
     throw new Error('HTTP status ' + res.status);
   }
@@ -1810,10 +1919,10 @@ function handleBridgeResponse(res){
     var trimmed = (raw || '').trim();
     if(trimmed.charAt(0) !== '{' && trimmed.charAt(0) !== '['){
       if(/accounts\.google\.com|ServiceLogin/i.test(raw)){
-        throw new Error('Script permission issue: ensure "Who has access" is set to "Anyone" in Web App deployment.');
+        throw new Error('Permissions issue: Set "Who has access" to "Anyone" in Web App deployment.');
       }
       if(/<!DOCTYPE|<html/i.test(raw)){
-        throw new Error('Google returned HTML instead of JSON. Check deployment settings ("Who has access: Anyone").');
+        throw new Error('Google returned HTML. Check deployment settings ("Who has access: Anyone").');
       }
     }
     var data;
@@ -1846,10 +1955,11 @@ function pushToDrive(silent){
 
   var payload = {
     app: 'MyLocationTracker',
-    version: 3,
+    version: 4,
     gmail: state.gmail || null,
     updatedAt: new Date().toISOString(),
-    locations: state.locations
+    locations: state.locations,
+    deletedIds: state.deletedTombstones // Explicit tombstones only
   };
 
   return callBridge('save', payload)
@@ -1859,7 +1969,10 @@ function pushToDrive(silent){
       }
       state.lastSync = new Date().toISOString();
       localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
-      if(!silent) toast('☁️ Synced ' + state.locations.length + ' pins to Drive');
+      // Once acknowledged by Drive, flush processed tombstones
+      state.deletedTombstones = [];
+      saveLocations();
+      if(!silent) toast('☁️ Synced ' + state.locations.length + ' pins to Drive (Protected)');
     })
     .catch(function(err){
       state.dirty = true;
@@ -1898,6 +2011,9 @@ function pullFromDrive(){
 
       remote.forEach(function(r){
         if(!r || !r.id || typeof r.lat !== 'number' || typeof r.lng !== 'number') return;
+        // Do not resurrect pins user explicitly deleted locally that haven't pushed yet
+        if(state.deletedTombstones.includes(r.id)) return;
+
         var cur = mapExisting.get(r.id);
         if(!cur){
           mapExisting.set(r.id, r);
@@ -1922,7 +2038,7 @@ function pullFromDrive(){
       state.dirty = false;
       state.lastSync = new Date().toISOString();
       localStorage.setItem(CONFIG.LS_SYNC, state.lastSync);
-      saveLocal();
+      saveLocations();
       renderList();
       refreshMarkers();
       toast('📥 Imported ' + added + ' new, ' + updated + ' updated from Drive');
@@ -1963,41 +2079,65 @@ function createSvgPin(tag, selected){
 }
 
 function initMap(){
-  // 1. Google Maps Classic with Real-Time Live Traffic Layer (DEFAULT)
   tileLayers.traffic = L.tileLayer('https://{s}.google.com/vt/lyrs=m,traffic&x={x}&y={y}&z={z}', {
     maxZoom: 21,
     subdomains: ['mt0','mt1','mt2','mt3'],
     attribution: '© Google Maps (Live Traffic)'
   });
 
-  // 2. Google Maps Classic Standard Roadmap
   tileLayers.classic = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
     maxZoom: 21,
     subdomains: ['mt0','mt1','mt2','mt3'],
     attribution: '© Google Maps'
   });
 
-  // 3. Google Maps Satellite Hybrid (Photographic + Road Overlays)
   tileLayers.satellite = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
     maxZoom: 21,
     subdomains: ['mt0','mt1','mt2','mt3'],
     attribution: '© Google Satellite'
   });
 
+  // Restore saved map center or default
+  var initCenter = [22.7214, 88.3752]; // Default to regional center
+  var initZoom = 13;
+  try {
+    var savedPos = JSON.parse(localStorage.getItem(CONFIG.LS_MAP_CENTER));
+    if(savedPos && savedPos.lat && savedPos.lng){
+      initCenter = [savedPos.lat, savedPos.lng];
+      initZoom = savedPos.zoom || 13;
+    }
+  } catch(e){}
+
+  var activeLayer = tileLayers[currentTileLayer] ? tileLayers[currentTileLayer] : tileLayers.traffic;
+
   map = L.map('map', {
     zoomControl: false,
-    layers: [tileLayers.traffic]
-  }).setView([20.5937, 78.9629], 5);
-
-  currentTileLayer = 'traffic';
+    layers: [activeLayer]
+  }).setView(initCenter, initZoom);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  map.on('moveend', function(){
+    var c = map.getCenter();
+    localStorage.setItem(CONFIG.LS_MAP_CENTER, JSON.stringify({
+      lat: c.lat,
+      lng: c.lng,
+      zoom: map.getZoom()
+    }));
+  });
 
   map.on('click', function(e){
     if(state.repositioning){
       setRepositionMarker(e.latlng);
     }
   });
+
+  // Sync layer button highlights
+  $$('.layer-opt').forEach(function(b){
+    b.classList.toggle('active', b.dataset.layer === currentTileLayer);
+  });
+  var trafficBadge = $('#trafficBadge');
+  if(trafficBadge) trafficBadge.style.display = (currentTileLayer === 'traffic') ? 'flex' : 'none';
 
   initLongPress();
   refreshMarkers();
@@ -2385,7 +2525,7 @@ function performLocalCategorySearch(category, label){
   if(spinner) spinner.classList.add('active');
   clearCategoryMarkers();
 
-  var center = map ? map.getCenter() : (state.userPos ? L.latLng(state.userPos.lat, state.userPos.lng) : L.latLng(20.5937, 78.9629));
+  var center = map ? map.getCenter() : (state.userPos ? L.latLng(state.userPos.lat, state.userPos.lng) : L.latLng(22.7214, 88.3752));
   var bounds = map ? map.getBounds() : null;
 
   var minDelta = 0.05;
@@ -2424,7 +2564,7 @@ function renderLocalCategoryResults(data, category, label){
   clearCategoryMarkers();
 
   if(!data || !data.length){
-    box.innerHTML = '<div class="search-empty">No local <b>' + esc(label) + '</b> found in this area. Try moving or zooming out.</div>';
+    box.innerHTML = '<div class="search-empty">No local <b>' + esc(label) + '</b> found in this area. Try zooming out.</div>';
     box.style.display = 'block';
     box._items = [];
     return;
@@ -2562,7 +2702,7 @@ function renderLocalCategoryResults(data, category, label){
     });
   }
 
-  toast('Found ' + data.length + ' ' + label + ' in this area');
+  toast('Found ' + data.length + ' ' + label + ' nearby');
 }
 
 function performSearch(q, autoSelectFirst){
@@ -2852,23 +2992,37 @@ function initListActions(){
         commit('Updated "' + loc.title + '"');
       });
     } else if(act === 'del'){
+      // Explicit deletion ONLY by user action
       openConfirmModal('Delete Location', 'Are you sure you want to delete "' + loc.title + '"?', function(){
         if(state.repositioning && state.repositioning.id === id) exitRepositionMode();
         state.locations = state.locations.filter(function(l){ return l.id !== id; });
-        commit('Deleted "' + loc.title + '"');
+        commit('Deleted "' + loc.title + '"', id);
+
+        // Also push immediate single-pin deletion to bridge if connected
+        if(state.scriptUrl){
+          callBridge('delete_location', { id: id }).catch(function(){});
+        }
       });
     }
   });
 
-  $('#locFilterInput').addEventListener('input', function(e){
-    state.activeFilter = e.target.value.trim();
-    renderList();
-  });
+  var filterInput = $('#locFilterInput');
+  if(filterInput){
+    filterInput.addEventListener('input', function(e){
+      state.activeFilter = e.target.value.trim();
+      renderList();
+    });
+  }
 
-  $('#locSortSelect').addEventListener('change', function(e){
-    state.activeSort = e.target.value;
-    renderList();
-  });
+  var sortSelect = $('#locSortSelect');
+  if(sortSelect){
+    sortSelect.value = state.activeSort;
+    sortSelect.addEventListener('change', function(e){
+      state.activeSort = e.target.value;
+      saveSetting(CONFIG.LS_SORT, state.activeSort);
+      renderList();
+    });
+  }
 }
 
 var modalCallback = null;
@@ -3024,6 +3178,9 @@ function initMapControls(){
       tileLayers[key].addTo(map);
       currentTileLayer = key;
 
+      // Persist chosen map style across reboots
+      saveSetting(CONFIG.LS_MAP_LAYER, currentTileLayer);
+
       if(trafficBadge){
         trafficBadge.style.display = (key === 'traffic') ? 'flex' : 'none';
       }
@@ -3079,9 +3236,13 @@ function initSettingsUI(){
   var guide = $('#deployGuide');
   var guideHeader = $('#deployGuideHeader');
   if(guide && guideHeader){
+    var savedGuideState = localStorage.getItem(CONFIG.LS_GUIDE_OPEN);
+    if(savedGuideState === 'true'){
+      guide.classList.add('open');
+    }
     guideHeader.addEventListener('click', function(){
       var isOpen = guide.classList.toggle('open');
-      localStorage.setItem(CONFIG.LS_GUIDE_OPEN, String(isOpen));
+      saveSetting(CONFIG.LS_GUIDE_OPEN, String(isOpen));
     });
   }
 
@@ -3090,8 +3251,8 @@ function initSettingsUI(){
     var v = $('#gmailInput').value.trim();
     if(v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return toast('Please enter a valid Gmail address');
     state.gmail = v;
-    localStorage.setItem(CONFIG.LS_GMAIL, v);
-    commit('Gmail ID saved');
+    saveSetting(CONFIG.LS_GMAIL, v);
+    commit('Gmail ID saved (Persistent)');
   });
 
   $('#scriptUrlInput').value = state.scriptUrl;
@@ -3103,7 +3264,7 @@ function initSettingsUI(){
     }
     if(v.includes('/dev')) toast('Notice: using /dev test URL. /exec is recommended for production.');
     state.scriptUrl = v;
-    localStorage.setItem(CONFIG.LS_URL, v);
+    saveSetting(CONFIG.LS_URL, v);
     state.busy = false;
     updateStatus();
     toast('Script URL saved — syncing');
@@ -3121,12 +3282,11 @@ function initSettingsUI(){
   $('#autoSync').checked = state.autoSync;
   $('#autoSync').addEventListener('change', function(e){
     state.autoSync = e.target.checked;
-    localStorage.setItem(CONFIG.LS_AUTO, String(state.autoSync));
+    saveSetting(CONFIG.LS_AUTO, String(state.autoSync));
     toast(state.autoSync ? 'Auto-sync enabled' : 'Auto-sync disabled');
     if(state.autoSync && state.scriptUrl) scheduleAutoPush();
   });
 
-  // Manual buttons reset any busy locks on click to ensure immediate action
   $('#btnSync').addEventListener('click', function(){
     state.busy = false;
     pushToDrive(false);
@@ -3151,7 +3311,7 @@ function initSettingsUI(){
   $('#btnExportLocal').addEventListener('click', function(){
     var data = {
       app: 'MyLocationTracker',
-      version: 3,
+      version: 4,
       gmail: state.gmail || null,
       exportedAt: new Date().toISOString(),
       locations: state.locations
@@ -3199,10 +3359,17 @@ function initSettingsUI(){
     reader.readAsText(file);
   });
 
+  // Local reset specifically does NOT trigger cloud deletion
   $('#btnClearLocal').addEventListener('click', function(){
-    openConfirmModal('Clear All Locations', 'This will delete all locations from this browser. Google Drive data will remain unless synced.', function(){
+    openConfirmModal('Reset Local Cache', 'This clears local cache on this device only. Your saved locations in Google Drive will NOT be touched.', function(){
       state.locations = [];
-      commit('All local data cleared');
+      state.deletedTombstones = []; // Do NOT tombstone cloud pins!
+      saveLocations();
+      renderList();
+      refreshMarkers();
+      state.dirty = false;
+      updateStatus();
+      toast('Local device cache cleared. Cloud data remains intact.');
     });
   });
 
@@ -3247,7 +3414,7 @@ function runDiagnostics(){
     .then(function(res){
       if(res.found){
         var n = res.data && res.data.locations ? res.data.locations.length : 0;
-        log(true, 'Google Drive Access', 'Found saved_address.json with ' + n + ' locations.');
+        log(true, 'Google Drive Access', 'Found saved_address.json with ' + n + ' locations. Drive protection active.');
       } else {
         log('warn', 'Google Drive Access', 'Bridge works! File not created in Drive yet — press "Sync to Google Drive" to create it.');
       }
@@ -3332,7 +3499,7 @@ function initPWA(){
   var manifestObj = {
     name: 'Location Tracker & Drive Sync',
     short_name: 'LocTracker',
-    description: 'Real-time GPS tracker, live traffic roadmap, local venue search and Google Drive sync',
+    description: 'Real-time GPS tracker, live traffic roadmap, local venue search and protected Google Drive sync',
     start_url: './',
     scope: './',
     display: 'standalone',
@@ -3375,7 +3542,7 @@ function initTabs(){
 
 function boot(){
   try {
-    loadLocal();
+    loadAllSettings();
     initPWA();
     initMap();
     initSearch();
