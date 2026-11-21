@@ -1182,7 +1182,7 @@ input:focus, textarea:focus, select:focus {
       <button class="search-icon-btn" id="searchSubmitBtn" title="Search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </button>
-      <input id="searchInput" type="text" placeholder="Search places, addresses, or coords…" autocomplete="off" spellcheck="false" />
+      <input id="searchInput" type="text" placeholder="Search shops, clinics, places (50 km)…" autocomplete="off" spellcheck="false" />
       <div class="search-spinner" id="searchSpinner"></div>
       <button class="search-act-btn" id="searchClear" style="display:none;" title="Clear">×</button>
     </div>
@@ -2404,21 +2404,66 @@ function exitRepositionMode(){
   $('#repositionBar').classList.remove('show');
 }
 
+var DISTRICT_RADIUS_KM = 50;
+
+function getDistrictBounds50Km(){
+  var center = state.userPos
+    ? { lat: state.userPos.lat, lng: state.userPos.lng }
+    : (map ? { lat: map.getCenter().lat, lng: map.getCenter().lng } : { lat: 22.7214, lng: 88.3752 });
+
+  var latDelta = DISTRICT_RADIUS_KM / 111.32;
+  var cosLat = Math.max(0.15, Math.cos(center.lat * Math.PI / 180));
+  var lngDelta = DISTRICT_RADIUS_KM / (111.32 * cosLat);
+
+  var south = Math.max(-90, center.lat - latDelta);
+  var north = Math.min(90, center.lat + latDelta);
+  var west  = Math.max(-180, center.lng - lngDelta);
+  var east  = Math.min(180, center.lng + lngDelta);
+
+  return {
+    center: center,
+    radiusMeters: DISTRICT_RADIUS_KM * 1000,
+    south: south,
+    north: north,
+    west: west,
+    east: east,
+    // Photon expects minLon,minLat,maxLon,maxLat
+    photonBbox: [west.toFixed(5), south.toFixed(5), east.toFixed(5), north.toFixed(5)].join(','),
+    // Nominatim expects left,top,right,bottom (west,north,east,south)
+    nominatimViewbox: [west.toFixed(5), north.toFixed(5), east.toFixed(5), south.toFixed(5)].join(',')
+  };
+}
+
+function escapeOverpassRegex(str){
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function getSearchResultIcon(item){
   var type = (item.type || '').toLowerCase();
   var cls = (item.class || '').toLowerCase();
-  if(cls === 'amenity'){
+  if(cls === 'amenity' || cls === 'healthcare'){
     if(type === 'cafe' || type === 'coffee') return '☕';
-    if(type === 'restaurant' || type === 'fast_food') return '🍽️';
-    if(type === 'fuel') return '⛽';
-    if(type === 'hospital' || type === 'pharmacy') return '🏥';
+    if(type === 'restaurant' || type === 'fast_food' || type === 'food_court') return '🍽️';
+    if(type === 'fuel' || type === 'charging_station') return '⛽';
+    if(type === 'hospital' || type === 'clinic' || type === 'doctors' || type === 'nursing_home') return '🏥';
+    if(type === 'pharmacy' || type === 'chemist') return '💊';
     if(type === 'bank' || type === 'atm') return '🏦';
+    if(type === 'school' || type === 'college' || type === 'university') return '🎓';
+    if(type === 'police') return '🚓';
     return '🏪';
   }
-  if(cls === 'tourism' || type === 'hotel') return '🏨';
-  if(cls === 'shop') return '🛒';
+  if(cls === 'tourism' || type === 'hotel' || type === 'guest_house' || type === 'hostel') return '🏨';
+  if(cls === 'shop'){
+    if(type === 'chemist' || type === 'medical_supply') return '💊';
+    if(type === 'bakery' || type === 'confectionery' || type === 'sweet') return '🍰';
+    if(type === 'clothes' || type === 'fashion' || type === 'boutique') return '👕';
+    if(type === 'electronics' || type === 'mobile_phone' || type === 'computer') return '📱';
+    return '🛒';
+  }
+  if(cls === 'office') return '🏢';
+  if(cls === 'leisure') return '🏞️';
   if(cls === 'highway' || type === 'road') return '🛣️';
-  if(type === 'city' || type === 'town' || type === 'village' || type === 'administrative') return '🏙️';
+  if(type === 'city' || type === 'town' || type === 'village' || type === 'suburb' || type === 'administrative') return '🏙️';
   if(item.type === 'coordinate') return '🎯';
   return '📍';
 }
@@ -2452,7 +2497,7 @@ function initSearch(){
       return;
     }
     spinner.classList.add('active');
-    searchTimer = setTimeout(function(){ performSearch(q, false); }, 300);
+    searchTimer = setTimeout(function(){ performSearch(q, false); }, 320);
   }
 
   input.addEventListener('input', updateSearchInputState);
@@ -2475,7 +2520,7 @@ function initSearch(){
       chip.classList.add('active');
       state.activeCategoryTag = catKey;
 
-      input.value = catLabel + ' nearby';
+      input.value = catLabel + ' (50 km)';
       clear.style.display = 'inline-flex';
       performLocalCategorySearch(catKey, catLabel);
     });
@@ -2555,6 +2600,48 @@ function initSearch(){
   });
 }
 
+function queryOverpassCategory50Km(category, distInfo, signal){
+  var tagFilters = {
+    cafe: 'nwr["amenity"~"cafe|ice_cream"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');',
+    restaurant: 'nwr["amenity"~"restaurant|fast_food|food_court"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');',
+    fuel: 'nwr["amenity"~"fuel|charging_station"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');',
+    hospital: 'nwr["amenity"~"hospital|clinic|doctors|pharmacy"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');nwr["healthcare"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');',
+    supermarket: 'nwr["shop"~"supermarket|convenience|grocery|department_store|mall"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');',
+    hotel: 'nwr["tourism"~"hotel|guest_house|hostel|motel"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');'
+  };
+  var filterBody = tagFilters[category] || ('nwr["amenity"="' + category + '"](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');');
+  var ql = '[out:json][timeout:15];(' + filterBody + ');out center 60;';
+
+  return fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    signal: signal,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+    body: 'data=' + encodeURIComponent(ql)
+  })
+  .then(function(r){ return r.ok ? r.json() : { elements: [] }; })
+  .then(function(json){
+    return (json.elements || []).map(function(el){
+      var lat = el.lat !== undefined ? el.lat : (el.center && el.center.lat);
+      var lon = el.lon !== undefined ? el.lon : (el.center && el.center.lon);
+      var tags = el.tags || {};
+      var name = tags.name || tags['name:en'] || tags.brand || '';
+      if(!name || lat === undefined || lon === undefined) return null;
+      var cls = tags.amenity ? 'amenity' : (tags.shop ? 'shop' : (tags.tourism ? 'tourism' : (tags.healthcare ? 'healthcare' : 'place')));
+      var type = tags.amenity || tags.shop || tags.tourism || tags.healthcare || category;
+      var addrParts = [tags['addr:street'], tags['addr:suburb'] || tags['addr:locality'], tags['addr:city'] || tags['addr:district']].filter(Boolean);
+      return {
+        name: name,
+        display_name: name + (addrParts.length ? ', ' + addrParts.join(', ') : ' (' + type.replace(/_/g, ' ') + ')'),
+        lat: lat,
+        lon: lon,
+        class: cls,
+        type: type
+      };
+    }).filter(Boolean);
+  })
+  .catch(function(){ return []; });
+}
+
 function performLocalCategorySearch(category, label){
   if(searchAbort) searchAbort.abort();
   searchAbort = new AbortController();
@@ -2563,30 +2650,19 @@ function performLocalCategorySearch(category, label){
   if(spinner) spinner.classList.add('active');
   clearCategoryMarkers();
 
-  var center = map ? map.getCenter() : (state.userPos ? L.latLng(state.userPos.lat, state.userPos.lng) : L.latLng(22.7214, 88.3752));
-  var bounds = map ? map.getBounds() : null;
+  var distInfo = getDistrictBounds50Km();
+  var nomUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=25&addressdetails=1&bounded=1&viewbox=' + distInfo.nominatimViewbox + '&q=' + encodeURIComponent(category);
 
-  var minDelta = 0.05;
-  var south = bounds ? Math.min(bounds.getSouth(), center.lat - minDelta) : (center.lat - minDelta);
-  var north = bounds ? Math.max(bounds.getNorth(), center.lat + minDelta) : (center.lat + minDelta);
-  var west  = bounds ? Math.min(bounds.getWest(), center.lng - minDelta)  : (center.lng - minDelta);
-  var east  = bounds ? Math.max(bounds.getEast(), center.lng + minDelta)  : (center.lng + minDelta);
-
-  var viewboxParam = [west, north, east, south].join(',');
-  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=16&addressdetails=1&bounded=1&viewbox=' + viewboxParam + '&q=' + encodeURIComponent(category);
-
-  fetch(url, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } })
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(!data || !data.length){
-        var fallbackUrl = 'https://nominatim.openstreetmap.org/search?format=json&limit=12&addressdetails=1&bounded=0&viewbox=' + viewboxParam + '&q=' + encodeURIComponent(category);
-        return fetch(fallbackUrl, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } }).then(function(r){ return r.json(); });
-      }
-      return data;
-    })
-    .then(function(data){
+  Promise.all([
+    queryOverpassCategory50Km(category, distInfo, searchAbort.signal),
+    fetch(nomUrl, { signal: searchAbort.signal, headers: { 'Accept': 'application/json' } })
+      .then(function(r){ return r.ok ? r.json() : []; })
+      .catch(function(){ return []; })
+  ])
+    .then(function(resultsArr){
       if(spinner) spinner.classList.remove('active');
-      renderLocalCategoryResults(data || [], category, label);
+      var merged = mergeAndDedupePlaces([].concat(resultsArr[0] || [], resultsArr[1] || []), distInfo.center, DISTRICT_RADIUS_KM);
+      renderLocalCategoryResults(merged.slice(0, 30), category, label);
     })
     .catch(function(err){
       if(err && err.name === 'AbortError') return;
@@ -2602,7 +2678,7 @@ function renderLocalCategoryResults(data, category, label){
   clearCategoryMarkers();
 
   if(!data || !data.length){
-    box.innerHTML = '<div class="search-empty">No local <b>' + esc(label) + '</b> found in this area. Try zooming out.</div>';
+    box.innerHTML = '<div class="search-empty">No <b>' + esc(label) + '</b> found within ' + DISTRICT_RADIUS_KM + ' km.</div>';
     box.style.display = 'block';
     box._items = [];
     return;
@@ -2703,7 +2779,7 @@ function renderLocalCategoryResults(data, category, label){
   }
 
   var headerHtml = '<div class="search-results-header">' +
-    '<span>📍 ' + data.length + ' ' + esc(label) + ' nearby</span>' +
+    '<span>📍 ' + data.length + ' ' + esc(label) + ' within ' + DISTRICT_RADIUS_KM + ' km</span>' +
     '<button class="clear-cat-btn" id="clearCatBtn">Clear</button>' +
   '</div>';
 
@@ -2740,7 +2816,122 @@ function renderLocalCategoryResults(data, category, label){
     });
   }
 
-  toast('Found ' + data.length + ' ' + label + ' nearby');
+  toast('Found ' + data.length + ' ' + label + ' within ' + DISTRICT_RADIUS_KM + ' km');
+}
+
+function mergeAndDedupePlaces(rawItems, center, maxRadiusKm){
+  var out = [];
+  (rawItems || []).forEach(function(item){
+    var lat = parseFloat(item.lat);
+    var lon = parseFloat(item.lon);
+    if(isNaN(lat) || isNaN(lon)) return;
+    var distKm = calcDistanceKm(center.lat, center.lng, lat, lon);
+    if(distKm > maxRadiusKm) return;
+
+    var parts = (item.display_name || '').split(',');
+    var title = (item.name || parts[0] || '').trim();
+    if(!title) return;
+
+    var normTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
+    var isDup = out.some(function(existing){
+      var exNorm = existing._normTitle;
+      var sameName = normTitle && exNorm && (normTitle === exNorm || normTitle.indexOf(exNorm) === 0 || exNorm.indexOf(normTitle) === 0);
+      var closeBy = calcDistanceKm(existing.lat, existing.lon, lat, lon) < 0.06;
+      return sameName && closeBy;
+    });
+
+    if(!isDup){
+      item.lat = lat;
+      item.lon = lon;
+      item._distKm = distKm;
+      item._normTitle = normTitle;
+      out.push(item);
+    }
+  });
+
+  out.sort(function(a, b){ return a._distKm - b._distKm; });
+  return out;
+}
+
+function queryPhoton50Km(q, distInfo, signal){
+  var url = 'https://photon.komoot.io/api/?q=' + encodeURIComponent(q) +
+    '&lat=' + distInfo.center.lat +
+    '&lon=' + distInfo.center.lng +
+    '&bbox=' + distInfo.photonBbox +
+    '&location_bias_scale=0.1' +
+    '&limit=20';
+
+  return fetch(url, { signal: signal, headers: { 'Accept': 'application/json' } })
+    .then(function(r){ return r.ok ? r.json() : { features: [] }; })
+    .then(function(json){
+      return (json.features || []).map(function(f){
+        var coords = f.geometry && f.geometry.coordinates;
+        var p = f.properties || {};
+        if(!coords || coords.length < 2) return null;
+        var name = p.name || p.street || p.city || '';
+        if(!name) return null;
+        var addrParts = [p.street, p.district || p.locality, p.city || p.county, p.state].filter(function(v, idx, arr){
+          return v && v !== name && arr.indexOf(v) === idx;
+        });
+        return {
+          name: name,
+          display_name: name + (addrParts.length ? ', ' + addrParts.join(', ') : ''),
+          lat: coords[1],
+          lon: coords[0],
+          class: p.osm_key || 'place',
+          type: p.osm_value || 'place'
+        };
+      }).filter(Boolean);
+    })
+    .catch(function(){ return []; });
+}
+
+function queryNominatim50Km(q, distInfo, signal){
+  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=15&addressdetails=1&bounded=1&viewbox=' +
+    distInfo.nominatimViewbox + '&q=' + encodeURIComponent(q);
+
+  return fetch(url, { signal: signal, headers: { 'Accept': 'application/json' } })
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .catch(function(){ return []; });
+}
+
+function queryOverpassName50Km(q, distInfo, signal){
+  var safeRegex = escapeOverpassRegex(q.trim());
+  if(safeRegex.length < 3) return Promise.resolve([]);
+
+  var ql = '[out:json][timeout:12];(' +
+    'nwr["name"~"' + safeRegex + '",i](around:' + distInfo.radiusMeters + ',' + distInfo.center.lat + ',' + distInfo.center.lng + ');' +
+  ');out center 25;';
+
+  return fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    signal: signal,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+    body: 'data=' + encodeURIComponent(ql)
+  })
+  .then(function(r){ return r.ok ? r.json() : { elements: [] }; })
+  .then(function(json){
+    return (json.elements || []).map(function(el){
+      var lat = el.lat !== undefined ? el.lat : (el.center && el.center.lat);
+      var lon = el.lon !== undefined ? el.lon : (el.center && el.center.lon);
+      var tags = el.tags || {};
+      var name = tags.name || tags['name:en'] || '';
+      if(!name || lat === undefined || lon === undefined) return null;
+      var cls = tags.amenity ? 'amenity' : (tags.shop ? 'shop' : (tags.healthcare ? 'healthcare' : (tags.office ? 'office' : 'place')));
+      var type = tags.amenity || tags.shop || tags.healthcare || tags.office || 'place';
+      var categoryLabel = type !== 'place' ? type.replace(/_/g, ' ') : '';
+      var addrParts = [categoryLabel, tags['addr:street'], tags['addr:suburb'] || tags['addr:locality'], tags['addr:city'] || tags['addr:district']].filter(Boolean);
+      return {
+        name: name,
+        display_name: name + (addrParts.length ? ', ' + addrParts.join(', ') : ''),
+        lat: lat,
+        lon: lon,
+        class: cls,
+        type: type
+      };
+    }).filter(Boolean);
+  })
+  .catch(function(){ return []; });
 }
 
 function performSearch(q, autoSelectFirst){
@@ -2769,25 +2960,33 @@ function performSearch(q, autoSelectFirst){
     }
   }
 
-  var viewboxParam = '';
-  if(map){
-    var b = map.getBounds();
-    viewboxParam = '&viewbox=' + [b.getWest(), b.getNorth(), b.getEast(), b.getSouth()].join(',') + '&bounded=0';
-  }
+  var distInfo = getDistrictBounds50Km();
+  var signal = searchAbort.signal;
 
-  var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=7&addressdetails=1' + viewboxParam + '&q=' + encodeURIComponent(q);
-
-  fetch(url, { signal:searchAbort.signal, headers:{ 'Accept':'application/json' } })
-    .then(function(r){ return r.json(); })
-    .then(function(data){
+  Promise.all([
+    queryPhoton50Km(q, distInfo, signal),
+    queryNominatim50Km(q, distInfo, signal)
+  ])
+    .then(function(pair){
+      var merged = mergeAndDedupePlaces([].concat(pair[0] || [], pair[1] || []), distInfo.center, DISTRICT_RADIUS_KM);
+      // Run deep Overpass POI name search on explicit Enter/Submit or when fast geocoders find fewer than 5 local shops/clinics
+      if((autoSelectFirst || merged.length < 5) && q.trim().length >= 3){
+        return queryOverpassName50Km(q, distInfo, signal).then(function(overpassItems){
+          return mergeAndDedupePlaces([].concat(merged, overpassItems || []), distInfo.center, DISTRICT_RADIUS_KM);
+        });
+      }
+      return merged;
+    })
+    .then(function(finalList){
       if(spinner) spinner.classList.remove('active');
-      renderSearchSuggestions(data || [], q);
-      if(autoSelectFirst && data && data.length > 0){
-        selectSearchResult(data[0]);
+      var capped = finalList.slice(0, 20);
+      renderSearchSuggestions(capped, q);
+      if(autoSelectFirst && capped.length > 0){
+        selectSearchResult(capped[0]);
       }
     })
     .catch(function(err){
-      if(err.name === 'AbortError') return;
+      if(err && err.name === 'AbortError') return;
       if(spinner) spinner.classList.remove('active');
       var box = $('#searchResults');
       box.innerHTML = '<div class="search-empty">Could not connect to search. Check internet.</div>';
@@ -2800,28 +2999,36 @@ function renderSearchSuggestions(items, query){
   if(!box) return;
 
   if(!items.length){
-    box.innerHTML = '<div class="search-empty">No results found for "<b>' + esc(query) + '</b>"</div>';
+    box.innerHTML = '<div class="search-empty">No results found within ' + DISTRICT_RADIUS_KM + ' km for "<b>' + esc(query) + '</b>"</div>';
     box.style.display = 'block';
     box._items = [];
     return;
   }
 
   box._items = items;
-  box.innerHTML = items.map(function(item, idx){
+  var headerHtml = '<div class="search-results-header">' +
+    '<span>🔍 ' + items.length + ' match' + (items.length === 1 ? '' : 'es') + ' within ' + DISTRICT_RADIUS_KM + ' km</span>' +
+  '</div>';
+
+  var rowsHtml = items.map(function(item, idx){
     var parts = (item.display_name || '').split(',');
     var main = item.name || parts[0] || 'Unknown place';
     var sub = parts.slice(1, 4).join(',').trim() || parts[0];
     var icon = getSearchResultIcon(item);
+    var distStr = (item._distKm !== undefined)
+      ? '<span style="color:#1a73e8;font-weight:700;font-size:11px;margin-left:6px;">' + formatDist(item._distKm) + '</span>'
+      : '';
 
     return '<div class="search-result" data-idx="' + idx + '">' +
       '<div class="search-result-icon">' + icon + '</div>' +
       '<div class="sr-body">' +
-        '<div class="sr-name">' + esc(main) + '</div>' +
+        '<div class="sr-name">' + esc(main) + distStr + '</div>' +
         '<div class="sr-addr">' + esc(sub) + '</div>' +
       '</div>' +
     '</div>';
   }).join('');
 
+  box.innerHTML = headerHtml + rowsHtml;
   box.style.display = 'block';
 }
 
